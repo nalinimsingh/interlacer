@@ -1,0 +1,6 @@
+configs/
+generated_data
+training/
+scripts/filepaths.py
+.ipynb_checkpoints/
+*.pyc
