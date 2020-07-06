@@ -1,5 +1,5 @@
 # Interlacer
-Joint frequency- and image- space learning for fourier imaging tasks.
+Joint frequency- and image- space learning for Fourier imaging tasks.
 
 keywords: image reconstruction, motion correction, denoising, magnetic resonance imaging, deep learning
 
@@ -22,3 +22,15 @@ The entry to our training code is in `scripts/train.py`, which is called via `py
 We provide a helper script to generate config files for experiments comparing multiple models in `scripts/make_configs.py`. This script allows the user to specify the name of an experiment as well as lists of model/data parameters to be tried (e.g. a list of model architectures). Running `scripts/make_configs.py` creates the subdirectory `configs/$experiment_name`, which contains a single configuration file for each specified model/data combination. 
 
 For SLURM users, running `python scripts/run_experiment.py ../configs/$experiment_name$` starts training (by running `train.py`) for each configuration file within the directory.
+
+## Paper 
+If you use the ideas or implementation in this repository, please cite our [paper](https://arxiv.org/abs/2007.01441):
+
+    @misc{singh2020joint,
+        title={Joint Frequency- and Image-Space Learning for Fourier Imaging},
+        author={Nalini M. Singh and Juan Eugenio Iglesias and Elfar Adalsteinsson and Adrian V. Dalca and Polina Golland},
+        year={2020},
+        eprint={2007.01441},
+        archivePrefix={arXiv},
+        primaryClass={cs.CV}
+    }       
