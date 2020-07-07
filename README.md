@@ -1,7 +1,7 @@
 # Interlacer
 Joint frequency- and image- space learning for Fourier imaging tasks.
 
-![Sample reconstruction results](./assets/teaser.png)
+![Sample reconstruction results](./assets/teaser.jpg)
 
 keywords: image reconstruction, motion correction, denoising, magnetic resonance imaging, deep learning
 
