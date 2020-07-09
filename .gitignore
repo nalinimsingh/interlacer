@@ -1,4 +1,4 @@
-configs/
+configs/*
 generated_data
 training/
 scripts/filepaths.py
