@@ -25,6 +25,46 @@ We provide a helper script to generate config files for experiments comparing mu
 
 For SLURM users, running `python scripts/run_experiment.py ../configs/$experiment_name$` starts training (by running `train.py`) for each configuration file within the directory.
 
+## Docker
+
+### Create Docker ENV
+```
+docker build -t interlacer/base -f .\docker\Dockerfile.base .
+```
+
+### Create module tests ENV
+```
+docker build -t interlacer/tests -f .\docker\Dockerfile.tests .
+```
+
+### Run tests
+```
+docker run interlacer/tests
+```
+
+out:
+```
+(base) PS C:\Users\Drmis\Desktop\projects\interlacer> docker run interlacer/tests
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+OK
+```
+
+> remove none tag images  
+> docker rmi $(docker images --format '{{.ID}}' --filter=dangling=true) -f
+
+### images
+```
+    (base) PS C:\Users\Drmis\Desktop\projects\interlacer> docker images
+    REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+    interlacer/tests    latest              d237e73a72d6        2 minutes ago       7.64GB
+    interlacer/base     latest              ce6e6d21771b        About an hour ago   7.64GB
+    conda/miniconda3    latest              2c4c668a3586        15 months ago       355MB
+```
+
+
 ## Paper 
 If you use the ideas or implementation in this repository, please cite our [paper](https://arxiv.org/abs/2007.01441):
 
