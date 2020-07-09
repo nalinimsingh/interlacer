@@ -1,0 +1,12 @@
+FROM interlacer/base
+
+COPY scripts /usr/src/app/scripts
+COPY interlacer /usr/src/app/interlacer
+COPY tests/test_utils.py /usr/src/app/
+
+WORKDIR /usr/src/app
+
+ENV PATH /usr/local/envs/interlacer/bin:$PATH
+RUN /bin/bash -c "source activate interlacer"
+
+CMD python test_utils.py
