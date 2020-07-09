@@ -55,6 +55,13 @@ OK
 > remove none tag images  
 > docker rmi $(docker images --format '{{.ID}}' --filter=dangling=true) -f
 
+### Start train with Docker
+Your local configs folder is connected and the necessary configuration file is taken from there.
+
+```
+docker run -it --volume $pwd/configs:/usr/src/app/configs --volume $pwd/training:/usr/src/app/training  interlacer/tests python scripts/train.py configs/path_to_config.ini
+```
+
 ### images
 ```
     (base) PS C:\Users\Drmis\Desktop\projects\interlacer> docker images
@@ -63,6 +70,7 @@ OK
     interlacer/base     latest              ce6e6d21771b        About an hour ago   7.64GB
     conda/miniconda3    latest              2c4c668a3586        15 months ago       355MB
 ```
+
 
 
 ## Paper 
