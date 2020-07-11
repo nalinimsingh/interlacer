@@ -33,7 +33,7 @@ def add_rotation_and_translations(sl, coord_list, angle, num_pix):
             sl_moved = ndimage.interpolation.shift(
                 sl_moved, [num_pix[i, 1], 0])
 
-        sl_k_after = np.fft.fft2(sl_moved)
+        sl_k_after = np.fft.fftshift(np.fft.fft2(sl_moved))
         if(coord_list[i + 1] != -1):
             sl_k_combined[coord_list[i]:coord_list[i + 1],
                           :] = sl_k_after[coord_list[i]:coord_list[i + 1], :]
