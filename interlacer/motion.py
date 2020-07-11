@@ -24,9 +24,9 @@ def add_rotation_and_translations(sl, coord_list, angle, num_pix):
     sl_k_combined[:coord_list[0], :] = sl_k_orig[:coord_list[0], :]
 
     for i in range(len(coord_list) - 1):
-        sl_rotate = ndimage.rotate(sl, angle[i], reshape=False)
+        sl_rotate = ndimage.rotate(sl, angle[i], reshape=False, mode='nearest')
         if(len(num_pix.shape) == 1):
-            sl_moved = ndimage.interpolation.shift(sl_rotate, [0, num_pix[i]])
+            sl_moved = ndimage.interpolation.shift(sl_rotate, [0, num_pix[i]], mode='nearest')
         elif(num_pix.shape[1] == 2):
             sl_moved = ndimage.interpolation.shift(
                 sl_rotate, [0, num_pix[i, 0]])
