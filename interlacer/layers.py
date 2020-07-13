@@ -68,7 +68,7 @@ class Mix(Layer):
         super(Mix, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self._x = self.add_weight(name='x',
+        self._mix = self.add_weight(name='mix_param',
                                   shape=(1,),
                                   initializer='uniform',
                                   trainable=True)
@@ -81,12 +81,12 @@ class Mix(Layer):
           x: Tuple (A,B), where A and B are numpy arrays of equal shape
 
         Returns:
-          sigm(x)*A + (1-sigm(x))B, where x is a learned combination parameter
+          sig_mix*A + (1-sig_mix)B, where six_mix = sigmoid(mix) and mix is a learned combination parameter
 
         """
         A, B = x
-        mix = tf.math.sigmoid(self._x)
-        return mix * A + (1 - mix) * B
+        sig_mix = tf.math.sigmoid(self._mix)
+        return sig_mix * A + (1 - sig_mix) * B
 
     def compute_output_shape(self, input_shape):
         return input_shape[0]
