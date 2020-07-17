@@ -77,7 +77,9 @@ def get_interlacer_residual_model(
         kernel_size,
         num_features,
         num_layers):
-    """Model with residual convolutions.
+    """Interlacer model with residual convolutions.
+    
+    Returns a model that takes a frequency-space input (of shape (batch_size, n, n, 2)) and returns a frequency-space output of the same size, comprised of interlacer layers and with connections from the input to each layer.
 
     Args:
       input_size(int): Tuple containing input shape, excluding batch size
