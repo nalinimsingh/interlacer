@@ -127,3 +127,77 @@ def get_interlacer_residual_model(
                     kernel_initializer='he_normal')(freq_in) + inputs
     model = keras.models.Model(inputs=inputs, outputs=output)
     return model
+
+
+def get_alternating_residual_model(
+        input_size,
+        nonlinearity,
+        kernel_size,
+        num_features,
+        num_layers):
+    """Alternating model with residual convolutions.
+
+    Returns a model that takes a frequency-space input (of shape (batch_size, n, n, 2)) and returns a frequency-space output of the same size, comprised of alternating frequency- and image-space convolutional layers and with connections from the input to each layer.
+
+    Args:
+      input_size(int): Tuple containing input shape, excluding batch size
+      nonlinearity(str): 'relu' or '3-piece'
+      kernel_size(int): Dimension of each convolutional filter
+      num_features(int): Number of features in each intermediate network layer
+      num_layers(int): Number of convolutional layers in model
+
+    Returns:
+      model: Keras model comprised of num_layers alternating image- and frequency-space convolutional layers with specified nonlinearities
+
+    """
+    inputs = Input(input_size)
+    n = inputs.get_shape().as_list()[1]
+    inp_real = tf.expand_dims(inputs[:, :, :, 0], -1)
+    inp_imag = tf.expand_dims(inputs[:, :, :, 1], -1)
+
+    n_copies = int(num_features / 2)
+
+    inp_copy = tf.reshape(tf.tile(tf.expand_dims(tf.concat(
+        [inp_real, inp_imag], axis=3), 4), [1, 1, 1, 1, n_copies]), [-1, n, n, num_features])
+
+    complex_inputs = Permute((3, 1, 2))(utils.join_reim_channels(inputs))
+    inputs_img = utils.split_reim_channels(
+        Permute(
+            (2, 3, 1))(
+            tf.signal.ifft2d(complex_inputs)))
+    inp_img_real = tf.expand_dims(inputs_img[:, :, :, 0], -1)
+    inp_img_imag = tf.expand_dims(inputs_img[:, :, :, 1], -1)
+
+    inp_img_copy = tf.reshape(tf.tile(tf.expand_dims(tf.concat(
+        [inp_img_real, inp_img_imag], axis=3), 4), [1, 1, 1, 1, n_copies]), [-1, n, n, num_features])
+
+    prev_layer = inputs
+
+    for i in range(num_layers):
+        k_conv = layers.BatchNormConv(
+            num_features, kernel_size)(prev_layer) + inp_copy
+        nonlinear = layers.get_nonlinear_layer('3-piece')(k_conv)
+
+        joined_freq_in = utils.join_reim_channels(nonlinear)
+        complex_channels = Permute((3, 1, 2))(
+            joined_freq_in)
+        img = utils.split_reim_channels(
+            Permute(
+                (2, 3, 1))(
+                tf.signal.ifft2d(complex_channels)))
+
+        img_conv = layers.BatchNormConv(
+            num_features, kernel_size)(img) + inp_img_copy
+        nonlinear = layers.get_nonlinear_layer('relu')(img_conv)
+        complex_channels = Permute((3, 1, 2))(
+            utils.join_reim_channels(nonlinear))
+        k = utils.split_reim_channels(
+            Permute(
+                (2, 3, 1))(
+                tf.signal.fft2d(complex_channels)))
+        prev_layer = k
+
+    output = Conv2D(2, kernel_size, activation=None, padding='same',
+                    kernel_initializer='he_normal')(prev_layer) + inputs
+    model = keras.models.Model(inputs=inputs, outputs=output)
+    return model
