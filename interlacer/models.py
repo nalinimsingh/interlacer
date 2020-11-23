@@ -64,7 +64,8 @@ def get_conv_residual_model(
     for i in range(num_layers):
         conv = layers.BatchNormConv(num_features, kernel_size)(prev_layer)
         nonlinear = layers.get_nonlinear_layer(nonlinearity)(conv)
-        prev_layer = nonlinear + tf.tile(inputs, [1, 1, 1, int(num_features/2)])
+        prev_layer = nonlinear + \
+            tf.tile(inputs, [1, 1, 1, int(num_features / 2)])
     output = Conv2D(2, kernel_size, activation=None, padding='same',
                     kernel_initializer='he_normal')(prev_layer) + inputs
     model = keras.models.Model(inputs=inputs, outputs=output)
@@ -78,7 +79,7 @@ def get_interlacer_residual_model(
         num_features,
         num_layers):
     """Interlacer model with residual convolutions.
-    
+
     Returns a model that takes a frequency-space input (of shape (batch_size, n, n, 2)) and returns a frequency-space output of the same size, comprised of interlacer layers and with connections from the input to each layer.
 
     Args:
@@ -118,7 +119,7 @@ def get_interlacer_residual_model(
 
     for i in range(num_layers):
         img_conv, k_conv = layers.Interlacer(
-            num_features, kernel_size)([img_in, freq_in])
+                num_features, kernel_size)([img_in, freq_in])
 
         freq_in = k_conv + inp_copy
         img_in = img_conv + inp_img_copy

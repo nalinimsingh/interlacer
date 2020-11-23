@@ -5,18 +5,9 @@ import tensorflow as tf
 from scipy import ndimage
 from skimage.transform import resize
 from tensorflow import keras
-from tensorflow.keras.datasets import mnist
 
 from scripts import filepaths
 from interlacer import motion, utils
-
-
-def get_mnist_images():
-    """Load MNIST images, normalized to [0,1]."""
-    (img_train, _), (img_test, _) = mnist.load_data()
-    img_train = img_train / 255.
-    img_test = img_test / 255.
-    return img_train, img_test
 
 
 def normalize_slice(sl_data):
@@ -364,12 +355,12 @@ def generate_data(
 
     Args:
       images: float
-      task: str
-      input_domain: str
-      output_domain: str
-      corruption_frac: float
-      batch_size: int (Default value = 16)
-      split: str (Default value = None)
+      task(str): 'undersample' (no other tasks supported for FastMRI data)
+      input_domain(str): The domain of the network input; 'FREQ' or 'IMAGE'
+      output_domain(str): The domain of the network output; 'FREQ' or 'IMAGE'
+      corruption_frac(float): Probability with which to zero a line in k-space
+      batch_size(int, optional): Number of input-output pairs in each batch
+      split(str): Which data split to use ('train', 'val', 'test')
 
     Returns:
       generator yielding a tuple containing a single batch of corrupted and corrected data
