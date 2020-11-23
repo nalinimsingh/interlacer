@@ -17,8 +17,10 @@ def add_rotation_and_translations(sl, coord_list, angle, num_pix):
       sl_k_corrupt(float): Motion-corrupted k-space version of the input slice, of shape(n, n)
 
     """
+    n = sl.shape[0]
     coord_list = np.concatenate([coord_list, [-1]])
     sl_k_orig = np.fft.fftshift(np.fft.fft2(sl))
+    sl_k_true = sl_k_orig
 
     sl_k_combined = np.zeros(sl.shape, dtype='complex64')
     sl_k_combined[:coord_list[0], :] = sl_k_orig[:coord_list[0], :]
@@ -26,7 +28,8 @@ def add_rotation_and_translations(sl, coord_list, angle, num_pix):
     for i in range(len(coord_list) - 1):
         sl_rotate = ndimage.rotate(sl, angle[i], reshape=False, mode='nearest')
         if(len(num_pix.shape) == 1):
-            sl_moved = ndimage.interpolation.shift(sl_rotate, [0, num_pix[i]], mode='nearest')
+            sl_moved = ndimage.interpolation.shift(
+                sl_rotate, [0, num_pix[i]], mode='nearest')
         elif(num_pix.shape[1] == 2):
             sl_moved = ndimage.interpolation.shift(
                 sl_rotate, [0, num_pix[i, 0]])
@@ -37,7 +40,12 @@ def add_rotation_and_translations(sl, coord_list, angle, num_pix):
         if(coord_list[i + 1] != -1):
             sl_k_combined[coord_list[i]:coord_list[i + 1],
                           :] = sl_k_after[coord_list[i]:coord_list[i + 1], :]
+            if(coord_list[i] <= int(n / 2) and int(n / 2) < coord_list[i + 1]):
+                sl_k_true = np.fft.fftshift(sl_k_after)
         else:
             sl_k_combined[coord_list[i]:, :] = sl_k_after[coord_list[i]:, :]
+            if(coord_list[i] <= int(n / 2)):
+                sl_k_true = np.fft.fftshift(sl_k_after)
+
     sl_k_corrupt = np.fft.ifftshift(sl_k_combined)
-    return sl_k_corrupt
+    return sl_k_corrupt, sl_k_true

@@ -31,7 +31,7 @@ batch_size = int(args.batch_size)
 
 datasets = ['train', 'val', 'test']
 domains = ['FREQ', 'IMAGE']
-corruption_fracs = [0.01, 0.05, 0.1]
+corruption_fracs = [0.01, 0.03, 0.05]
 
 base_dir = filepaths.MOTION_DATA_DIR
 

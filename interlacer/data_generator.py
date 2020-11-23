@@ -206,8 +206,6 @@ def generate_motion_data(
 
         for j in batch_inds:
             true_img = np.expand_dims(images[j, :, :, :], 0)
-            true_k = np.expand_dims(spectra[j, :, :, :], 0)
-            mask = np.ones(true_k.shape)
 
             img_size = images.shape[1]
             num_points = int(corruption_frac * n)
@@ -223,9 +221,10 @@ def generate_motion_data(
             num_pix[:, 1] = np.random.random(num_points) * 40 - 20
             angle = np.random.random(num_points) * 30 - 15
 
-            corrupt_k = motion.add_rotation_and_translations(
+            corrupt_k, true_k = motion.add_rotation_and_translations(
                 reim_images[j, :, :], coord_list, angle, num_pix)
             corrupt_k = utils.split_reim(np.expand_dims(corrupt_k, 0))
+            true_k = utils.split_reim(np.expand_dims(true_k, 0))
 
             corrupt_img = utils.convert_to_image_domain(corrupt_k)
 
