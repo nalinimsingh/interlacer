@@ -36,8 +36,8 @@ for exp_config in [i for i in os.listdir(
     exp_config_name = exp_config[:-4]
     log_path = os.path.join(
         experiment_path.replace(
-            'configs',
-            'training'),
+            'configs/',
+            'training/'),
         exp_config_name +
         '/log.txt')
     command = 'srun -p gpu --gres=gpu:2080ti:1 -t 0 python scripts/train.py ' + \
