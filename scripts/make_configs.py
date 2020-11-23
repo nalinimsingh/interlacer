@@ -21,25 +21,25 @@ exp_name = 'undersample_example'
 
 # Customizable fields
 datasets = ['MRI']
-tasks = ['rand_line_zero']
+tasks = ['undersample']
 corruption_fracs = ['0.75']
 
 architectures = [
-    'CONV',
     'CONV_RESIDUAL',
-    'INTERLACER_RESIDUAL']
+    'INTERLACER_RESIDUAL',
+    'ALTERNATING_RESIDUAL']
 kernel_sizes = ['9']
 num_featureses = ['32']
-num_layerses = ['6', '12']
-loss_types = ['image']
+num_layerses = ['8','16']
+loss_types = ['compimage']
 losses = ['L1']
+loss_lambdas = ['0.1']
 input_domains = ['IMAGE', 'FREQ']
 output_domains = ['IMAGE', 'FREQ']
 nonlinearities = ['relu', '3-piece']
-loss_lambdas = ['0.1']
 
 num_epochses = ['5000']
-batch_sizes = ['16']
+batch_sizes = ['8']
 
 
 for dataset, task, corruption_frac, architecture, kernel_size, num_features, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, num_epochs, batch_size in itertools.product(
@@ -67,8 +67,8 @@ for dataset, task, corruption_frac, architecture, kernel_size, num_features, num
     # Excluded configs
     if(input_domain == output_domain and
        not(input_domain == 'IMAGE' and nonlinearity == '3-piece') and
-       not(architecture == 'INTERLACER_RESIDUAL' and num_layers == '12') and
-       not(architecture != 'INTERLACER_RESIDUAL' and num_layers == '6') and
+       not(architecture != 'CONV_RESIDUAL' and num_layers == '16') and
+       not(architecture == 'CONV_RESIDUAL' and num_layers == '8') and
        not(input_domain == 'FREQ' and nonlinearity == 'relu') and
        not(input_domain == 'IMAGE' and architecture != 'CONV_RESIDUAL') and
        not(input_domain == 'FREQ' and architecture == 'CONV')):
