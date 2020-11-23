@@ -52,8 +52,7 @@ def get_mri_slices_from_dir(slice_dir):
                 slice_dir,
                 img),
             mmap_mode='r')['vol_data']
-        sl_data = normalize_slice(vol_data)
-        sl_data = resize(sl_data, (128, 128))
+        sl_data = vol_data
         slices.append(sl_data)
     slices = np.asarray(slices)
     return slices
@@ -154,16 +153,18 @@ def generate_undersampled_data(
                 mask[0, coord_list[k], :, :] = 0
             corrupt_img = utils.convert_to_image_domain(corrupt_k)
 
+            nf = np.max(corrupt_img)
+
             if(input_domain == 'FREQ'):
-                inputs = np.append(inputs, corrupt_k, axis=0)
+                inputs = np.append(inputs, corrupt_k / nf, axis=0)
                 masks = np.append(masks, mask, axis=0)
             elif(input_domain == 'IMAGE'):
-                inputs = np.append(inputs, corrupt_img, axis=0)
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
 
             if(output_domain == 'FREQ'):
-                outputs = np.append(outputs, true_k, axis=0)
+                outputs = np.append(outputs, true_k / nf, axis=0)
             elif(output_domain == 'IMAGE'):
-                outputs = np.append(outputs, true_img, axis=0)
+                outputs = np.append(outputs, true_img / nf, axis=0)
 
         yield(inputs, outputs)
 
@@ -228,15 +229,18 @@ def generate_motion_data(
 
             corrupt_img = utils.convert_to_image_domain(corrupt_k)
 
+            nf = np.max(corrupt_img)
+
             if(input_domain == 'FREQ'):
-                inputs = np.append(inputs, corrupt_k, axis=0)
+                inputs = np.append(inputs, corrupt_k / nf, axis=0)
+                #masks = np.append(masks, mask, axis=0)
             elif(input_domain == 'IMAGE'):
-                inputs = np.append(inputs, corrupt_img, axis=0)
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
 
             if(output_domain == 'FREQ'):
-                outputs = np.append(outputs, true_k, axis=0)
+                outputs = np.append(outputs, true_k / nf, axis=0)
             elif(output_domain == 'IMAGE'):
-                outputs = np.append(outputs, true_img, axis=0)
+                outputs = np.append(outputs, true_img / nf, axis=0)
 
         yield(inputs, outputs)
 
@@ -332,16 +336,18 @@ def generate_noisy_data(
             corrupt_k = true_k.copy() + noise
             corrupt_img = utils.convert_to_image_domain(corrupt_k)
 
+            nf = np.max(corrupt_img)
+
             if(input_domain == 'FREQ'):
-                inputs = np.append(inputs, corrupt_k, axis=0)
+                inputs = np.append(inputs, corrupt_k / nf, axis=0)
                 masks = np.append(masks, mask, axis=0)
             elif(input_domain == 'IMAGE'):
-                inputs = np.append(inputs, corrupt_img, axis=0)
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
 
             if(output_domain == 'FREQ'):
-                outputs = np.append(outputs, true_k, axis=0)
+                outputs = np.append(outputs, true_k / nf, axis=0)
             elif(output_domain == 'IMAGE'):
-                outputs = np.append(outputs, true_img, axis=0)
+                outputs = np.append(outputs, true_img / nf, axis=0)
 
         yield(inputs, outputs)
 
