@@ -152,6 +152,15 @@ elif(exp_config.architecture == 'INTERLACER_RESIDUAL'):
         exp_config.kernel_size,
         exp_config.num_features,
         exp_config.num_layers)
+elif(exp_config.architecture == 'ALTERNATING_RESIDUAL'):
+    model = models.get_alternating_residual_model(
+        (n,
+         n,
+         2),
+        exp_config.nonlinearity,
+        exp_config.kernel_size,
+        exp_config.num_features,
+        exp_config.num_layers)
 print('Loaded model')
 
 # Checkpointing
