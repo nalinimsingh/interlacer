@@ -27,7 +27,8 @@ from tensorflow.keras.datasets import mnist
 
 import filepaths
 import training_config
-from interlacer import data_generator, layers, losses, models, utils
+from interlacer import (data_generator, fastmri_data_generator, layers, losses,
+                        models, utils)
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.5)
@@ -72,29 +73,58 @@ if(exp_config.dataset == 'MRI'):
     img_train, img_val = data_generator.get_mri_images()
 elif(exp_config.dataset == 'MNIST'):
     img_train, img_val = data_generator.get_mnist_images()
-    
-train_generator = data_generator.generate_data(
-    img_train,
-    exp_config.task,
-    exp_config.input_domain,
-    exp_config.output_domain,
-    exp_config.corruption_frac,
-    exp_config.batch_size,
-    'train')
-print('Generated training generator')
 
-val_generator = data_generator.generate_data(
-    img_val,
-    exp_config.task,
-    exp_config.input_domain,
-    exp_config.output_domain,
-    exp_config.corruption_frac,
-    exp_config.batch_size,
-    'val')
-print('Generated validation generator')
+if('FASTMRI' in exp_config.dataset):
+    fastmri_dir = filepaths.FASTMRI_DATA_DIR
+    fm_train_dir = os.path.join(fastmri_dir, 'train/singlecoil_train')
+    fm_val_dir = os.path.join(fastmri_dir, 'validate/singlecoil_val')
+
+    train_generator = fastmri_data_generator.generate_data(
+        fm_train_dir,
+        exp_config.task,
+        exp_config.input_domain,
+        exp_config.output_domain,
+        exp_config.corruption_frac,
+        fs=('FS' in exp_config.dataset),
+        batch_size=exp_config.batch_size)
+    print('Generated training generator')
+
+    val_generator = fastmri_data_generator.generate_data(
+        fm_val_dir,
+        exp_config.task,
+        exp_config.input_domain,
+        exp_config.output_domain,
+        exp_config.corruption_frac,
+        fs=('FS' in exp_config.dataset),
+        batch_size=exp_config.batch_size)
+    print('Generated validation generator')
+else:
+    train_generator = data_generator.generate_data(
+        img_train,
+        exp_config.task,
+        exp_config.input_domain,
+        exp_config.output_domain,
+        exp_config.corruption_frac,
+        exp_config.batch_size,
+        'train')
+    print('Generated training generator')
+
+    val_generator = data_generator.generate_data(
+        img_val,
+        exp_config.task,
+        exp_config.input_domain,
+        exp_config.output_domain,
+        exp_config.corruption_frac,
+        exp_config.batch_size,
+        'val')
+    print('Generated validation generator')
 
 # Pick architecture
-n = img_train.shape[1]
+if(exp_config.dataset == 'FASTMRI'):
+    n = 320
+else:
+    n = img_train.shape[1]
+
 if(exp_config.architecture == 'CONV'):
     model = models.get_conv_no_residual_model(
         (n,
