@@ -36,13 +36,14 @@ losses = ['L1']
 input_domains = ['IMAGE', 'FREQ']
 output_domains = ['IMAGE', 'FREQ']
 nonlinearities = ['relu', '3-piece']
+loss_lambdas = ['0.1']
 
 num_epochses = ['5000']
 batch_sizes = ['16']
 
 
-for dataset, task, corruption_frac, architecture, kernel_size, num_features, num_layers, loss_type, loss, input_domain, output_domain, nonlinearity, num_epochs, batch_size in itertools.product(
-        datasets, tasks, corruption_fracs, architectures, kernel_sizes, num_featureses, num_layerses, loss_types, losses, input_domains, output_domains, nonlinearities, num_epochses, batch_sizes):
+for dataset, task, corruption_frac, architecture, kernel_size, num_features, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, num_epochs, batch_size in itertools.product(
+        datasets, tasks, corruption_fracs, architectures, kernel_sizes, num_featureses, num_layerses, loss_types, losses, loss_lambdas, input_domains, output_domains, nonlinearities, num_epochses, batch_sizes):
     base_dir = os.path.join(filepaths.CONFIG_DIR, exp_name)
     ini_filename = dataset
     for name in [
@@ -54,6 +55,7 @@ for dataset, task, corruption_frac, architecture, kernel_size, num_features, num
             num_layers,
             loss_type,
             loss,
+            loss_lambda,
             input_domain,
             output_domain,
             nonlinearity,
@@ -90,6 +92,7 @@ for dataset, task, corruption_frac, architecture, kernel_size, num_features, num
         f.write('num_layers = ' + num_layers + '\n')
         f.write('loss_type = ' + loss_type + '\n')
         f.write('loss = ' + loss + '\n')
+        f.write('loss_lambda = ' + loss_lambda + '\n')
         f.write('input_domain = ' + input_domain + '\n')
         f.write('output_domain = ' + output_domain + '\n')
         f.write('nonlinearity = ' + nonlinearity + '\n')

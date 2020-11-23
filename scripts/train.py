@@ -194,10 +194,34 @@ tb_callback = keras.callbacks.TensorBoard(
     log_dir=tb_dir, histogram_freq=0, write_graph=True, write_images=True)
 
 # Select loss
-if(exp_config.loss_type=='image'):
+if(exp_config.loss_type == 'image'):
     used_loss = losses.image_loss(exp_config.output_domain, exp_config.loss)
-elif(exp_config.loss_type=='freq'):
+elif(exp_config.loss_type == 'compimage'):
+    used_loss = losses.comp_image_loss(
+        exp_config.output_domain, exp_config.loss)
+elif(exp_config.loss_type == 'freq'):
     used_loss = losses.fourier_loss(exp_config.output_domain, exp_config.loss)
+elif(exp_config.loss_type == 'joint'):
+    used_loss = losses.joint_img_freq_loss(
+        exp_config.output_domain,
+        exp_config.loss,
+        exp_config.loss_lambda)
+elif(exp_config.loss_type == 'joint_ssim'):
+    used_loss = losses.joint_ssim_ms_freq_loss(
+        exp_config.output_domain,
+        exp_config.loss,
+        exp_config.loss_lambda)
+elif(exp_config.loss_type == 'joint_ssim_image'):
+    used_loss = losses.joint_ssim_ms_image_loss(
+        exp_config.output_domain, exp_config.loss, exp_config.loss_lambda)
+elif(exp_config.loss_type == 'ssim'):
+    used_loss = losses.ssim(exp_config.output_domain)
+elif(exp_config.loss_type == 'ssim_ms'):
+    used_loss = losses.ssim_multiscale(exp_config.output_domain)
+elif(exp_config.loss_type == 'lpips'):
+    used_loss = losses.lpips(exp_config.output_domain)
+elif(exp_config.loss_type == 'psnr'):
+    used_loss = losses.psnr(exp_config.output_domain)
 else:
     raise ValueError('Unrecognized loss type.')
 
@@ -206,12 +230,30 @@ fourier_l1 = losses.fourier_loss(exp_config.output_domain, 'L1')
 fourier_l2 = losses.fourier_loss(exp_config.output_domain, 'L2')
 image_l1 = losses.image_loss(exp_config.output_domain, 'L1')
 image_l2 = losses.image_loss(exp_config.output_domain, 'L2')
-image_mag_l1 = losses.image_mag_loss(exp_config.output_domain, 'L1')
+joint = losses.joint_img_freq_loss(
+    exp_config.output_domain,
+    'L1',
+    exp_config.loss_lambda)
+lpips = losses.lpips(exp_config.output_domain)
+ssim = losses.ssim(exp_config.output_domain)
+ssim_ms = losses.ssim_multiscale(exp_config.output_domain)
+psnr = losses.psnr(exp_config.output_domain)
 
 lr = 1e-3
-model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
-              loss=used_loss,
-              metrics=[fourier_l1, fourier_l2, image_l1, image_l2])
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(
+        lr=lr),
+    loss=used_loss,
+    metrics=[
+        fourier_l1,
+        fourier_l2,
+        image_l1,
+        image_l2,
+        joint,
+        lpips,
+        ssim,
+        ssim_ms,
+        psnr])
 print('Compiled model')
 
 if(debug):

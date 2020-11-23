@@ -76,6 +76,8 @@ class TrainingConfig:
         self.loss_type = read_or_default(
             config, 'MODEL', 'loss_type', 'str', 'image')
         self.loss = read_or_default(config, 'MODEL', 'loss', 'str', 'L1')
+        self.loss_lambda = read_or_default(
+            config, 'MODEL', 'loss_lambda', 'float', 0.1)
         self.input_domain = read_or_default(
             config, 'MODEL', 'input_domain', 'str', 'FREQ')
         self.output_domain = read_or_default(
@@ -101,6 +103,7 @@ class TrainingConfig:
                 self.num_layers,
                 self.loss_type,
                 self.loss,
+                self.loss_lambda,
                 self.input_domain,
                 self.output_domain,
                 self.nonlinearity,
