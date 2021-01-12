@@ -81,41 +81,27 @@ if('FASTMRI' in exp_config.dataset):
 
     train_generator = fastmri_data_generator.generate_data(
         fm_train_dir,
-        exp_config.task,
-        exp_config.input_domain,
-        exp_config.output_domain,
-        exp_config.corruption_frac,
+        exp_config,
         fs=('FS' in exp_config.dataset),
         batch_size=exp_config.batch_size)
     print('Generated training generator')
 
     val_generator = fastmri_data_generator.generate_data(
         fm_val_dir,
-        exp_config.task,
-        exp_config.input_domain,
-        exp_config.output_domain,
-        exp_config.corruption_frac,
+        exp_config,
         fs=('FS' in exp_config.dataset),
         batch_size=exp_config.batch_size)
     print('Generated validation generator')
 else:
     train_generator = data_generator.generate_data(
         img_train,
-        exp_config.task,
-        exp_config.input_domain,
-        exp_config.output_domain,
-        exp_config.corruption_frac,
-        exp_config.batch_size,
+        exp_config,
         'train')
     print('Generated training generator')
 
     val_generator = data_generator.generate_data(
         img_val,
-        exp_config.task,
-        exp_config.input_domain,
-        exp_config.output_domain,
-        exp_config.corruption_frac,
-        exp_config.batch_size,
+        exp_config,
         'val')
     print('Generated validation generator')
 

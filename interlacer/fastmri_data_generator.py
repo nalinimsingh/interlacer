@@ -165,10 +165,7 @@ def generate_undersampled_data(
 
 def generate_data(
         image_dir,
-        task,
-        input_domain,
-        output_domain,
-        corruption_frac,
+        exp_config,
         fs=False,
         batch_size=16):
     """Return a generator with corrupted and corrected data.
@@ -186,11 +183,17 @@ def generate_data(
       generator yielding a tuple containing a single batch of corrupted and corrected data
 
     """
+    task = exp_config.task
+    input_domain = exp_config.input_domain
+    output_domain = exp_config.output_domain
+    us_frac = exp_config.us_frac
+    batch_size = exp_config.batch_size
+
     if(task == 'undersample'):
         return generate_undersampled_data(
             image_dir,
             input_domain,
             output_domain,
-            corruption_frac,
+            us_frac,
             fs=fs,
             batch_size=batch_size)

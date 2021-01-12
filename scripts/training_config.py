@@ -1,7 +1,7 @@
 import configparser
 
 
-def read_or_default(config, section, option, field_type, default):
+def read_or_default(config, section, option, field_type):
     """Reads and returns a config field.
 
     Args:
@@ -25,7 +25,7 @@ def read_or_default(config, section, option, field_type, default):
         elif(field_type == 'bool'):
             return config.getboolean(section, option)
     except BaseException:
-        return default
+        return None
 
 
 class TrainingConfig:
@@ -59,36 +59,46 @@ class TrainingConfig:
         config = configparser.ConfigParser()
         config.read(self.config_path)
 
-        self.dataset = read_or_default(config, 'DATA', 'dataset', 'str', 'MRI')
+        self.dataset = read_or_default(config, 'DATA', 'dataset', 'str')
         self.task = read_or_default(
-            config, 'DATA', 'task', 'str', 'undersample')
-        self.corruption_frac = read_or_default(
-            config, 'DATA', 'corruption_frac', 'float', 0.50)
+            config, 'DATA', 'task', 'str')
+        self.us_frac = read_or_default(
+            config, 'DATA', 'us_frac', 'float')
+        self.mot_frac = read_or_default(
+            config, 'DATA', 'mot_frac', 'float')
+        self.max_htrans = read_or_default(
+            config, 'DATA', 'max_htrans', 'float')
+        self.max_vtrans = read_or_default(
+            config, 'DATA', 'max_vtrans', 'float')
+        self.max_rot = read_or_default(
+            config, 'DATA', 'max_rot', 'float')
+        self.noise_std = read_or_default(
+            config, 'DATA', 'noise_std', 'float')
 
         self.architecture = read_or_default(
-            config, 'MODEL', 'architecture', 'str', 'CONV')
+            config, 'MODEL', 'architecture', 'str')
         self.kernel_size = read_or_default(
-            config, 'MODEL', 'kernel_size', 'int', 9)
+            config, 'MODEL', 'kernel_size', 'int')
         self.num_features = read_or_default(
-            config, 'MODEL', 'num_features', 'int', 32)
+            config, 'MODEL', 'num_features', 'int')
         self.num_layers = read_or_default(
-            config, 'MODEL', 'num_layers', 'int', 6)
+            config, 'MODEL', 'num_layers', 'int')
         self.loss_type = read_or_default(
-            config, 'MODEL', 'loss_type', 'str', 'image')
-        self.loss = read_or_default(config, 'MODEL', 'loss', 'str', 'L1')
+            config, 'MODEL', 'loss_type', 'str')
+        self.loss = read_or_default(config, 'MODEL', 'loss', 'str')
         self.loss_lambda = read_or_default(
-            config, 'MODEL', 'loss_lambda', 'float', 0.1)
+            config, 'MODEL', 'loss_lambda', 'float')
         self.input_domain = read_or_default(
-            config, 'MODEL', 'input_domain', 'str', 'FREQ')
+            config, 'MODEL', 'input_domain', 'str')
         self.output_domain = read_or_default(
-            config, 'MODEL', 'output_domain', 'str', 'FREQ')
+            config, 'MODEL', 'output_domain', 'str')
         self.nonlinearity = read_or_default(
-            config, 'MODEL', 'nonlinearity', 'str', 'relu')
+            config, 'MODEL', 'nonlinearity', 'str')
 
         self.num_epochs = read_or_default(
-            config, 'TRAINING', 'num_epochs', 'int', 500)
+            config, 'TRAINING', 'num_epochs', 'int')
         self.batch_size = read_or_default(
-            config, 'TRAINING', 'batch_size', 'int', 10)
+            config, 'TRAINING', 'batch_size', 'int')
         self.set_job_name()
 
     def set_job_name(self):
@@ -96,7 +106,12 @@ class TrainingConfig:
         self.job_name = self.dataset
         for tag in [
                 self.task,
-                self.corruption_frac,
+                self.us_frac,
+                self.mot_frac,
+                self.max_htrans,
+                self.max_vtrans,
+                self.max_rot,
+                self.noise_std,
                 self.architecture,
                 self.kernel_size,
                 self.num_features,

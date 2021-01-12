@@ -164,7 +164,10 @@ def generate_motion_data(
         images,
         input_domain,
         output_domain,
-        corruption_frac,
+        mot_frac,
+        max_htrans,
+        max_vtrans,
+        max_rot,
         batch_size=10):
     """Generator that yields batches of motion-corrupted input and correct output data.
 
@@ -174,7 +177,10 @@ def generate_motion_data(
       images(float): Numpy array of input images, of shape (num_images,n,n)
       input_domain(str): The domain of the network input; 'FREQ' or 'IMAGE'
       output_domain(str): The domain of the network output; 'FREQ' or 'IMAGE'
-      corruption_frac(float): Fraction of lines at which motion occurs.
+      mot_frac(float): Fraction of lines at which motion occurs.
+      max_htrans(float): Maximum fraction of image width for a translation.
+      max_vtrans(float): Maximum fraction of image height for a translation.
+      max_rot(float): Maximum fraction of 360 degrees for a rotation.
       batch_size(int, optional): Number of input-output pairs in each batch (Default value = 10)
 
     Returns:
@@ -200,7 +206,7 @@ def generate_motion_data(
             true_img = np.expand_dims(images[j, :, :, :], 0)
 
             img_size = images.shape[1]
-            num_points = int(corruption_frac * n)
+            num_points = int(mot_frac * n)
             coord_list = np.sort(
                 np.random.choice(
                     img_size,
@@ -209,9 +215,16 @@ def generate_motion_data(
             num_pix = np.zeros((num_points, 2))
             angle = np.zeros(num_points)
 
-            num_pix[:, 0] = np.random.random(num_points) * 40 - 20
-            num_pix[:, 1] = np.random.random(num_points) * 40 - 20
-            angle = np.random.random(num_points) * 30 - 15
+            max_htrans_pix = n * max_htrans
+            max_vtrans_pix = n * max_vtrans
+            max_rot_deg = 360 * max_rot
+
+            num_pix[:, 0] = np.random.random(
+                num_points) * (2 * max_htrans_pix) - max_htrans_pix
+            num_pix[:, 1] = np.random.random(
+                num_points) * (2 * max_vtrans_pix) - max_vtrans_pix
+            angle = np.random.random(num_points) * \
+                (2 * max_rot_deg) - max_rot_deg
 
             corrupt_k, true_k = motion.add_rotation_and_translations(
                 reim_images[j, :, :], coord_list, angle, num_pix)
@@ -224,7 +237,6 @@ def generate_motion_data(
 
             if(input_domain == 'FREQ'):
                 inputs = np.append(inputs, corrupt_k / nf, axis=0)
-                #masks = np.append(masks, mask, axis=0)
             elif(input_domain == 'IMAGE'):
                 inputs = np.append(inputs, corrupt_img / nf, axis=0)
 
@@ -345,11 +357,7 @@ def generate_noisy_data(
 
 def generate_data(
         images,
-        task,
-        input_domain,
-        output_domain,
-        corruption_frac,
-        batch_size=16,
+        exp_config,
         split=None):
     """Return a generator with corrupted and corrected data.
 
@@ -366,19 +374,27 @@ def generate_data(
       generator yielding a tuple containing a single batch of corrupted and corrected data
 
     """
+    task = exp_config.task
+    input_domain = exp_config.input_domain
+    output_domain = exp_config.output_domain
+    batch_size = exp_config.batch_size
+
     if(task == 'undersample'):
         return generate_undersampled_data(
             images,
             input_domain,
             output_domain,
-            corruption_frac,
+            exp_config.us_frac,
             batch_size)
     elif(task == 'motion'):
-        return generate_stored_motion_data(
+        return generate_motion_data(
             images,
             input_domain,
             output_domain,
-            corruption_frac,
+            exp_config.mot_frac,
+            exp_config.max_htrans,
+            exp_config.max_vtrans,
+            exp_config.max_rot,
             batch_size,
             split=split)
     elif(task == 'noise'):
@@ -386,5 +402,5 @@ def generate_data(
             images,
             input_domain,
             output_domain,
-            corruption_frac,
+            exp_config.noise_std,
             batch_size)
