@@ -22,7 +22,12 @@ exp_name = 'undersample_example'
 # Customizable fields
 datasets = ['MRI']
 tasks = ['undersample']
-corruption_fracs = ['0.75']
+us_fracs = ['0.75']
+mot_fracs = ['None']
+max_htranses = ['None']
+max_vtranses = ['None']
+max_rots = ['None']
+noise_stds = ['None']
 
 architectures = [
     'CONV_RESIDUAL',
@@ -39,16 +44,21 @@ output_domains = ['IMAGE', 'FREQ']
 nonlinearities = ['relu', '3-piece']
 
 num_epochses = ['5000']
-batch_sizes = ['8']
+batch_sizes = ['4']
 
 
-for dataset, task, corruption_frac, architecture, kernel_size, num_features, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, num_epochs, batch_size in itertools.product(
-        datasets, tasks, corruption_fracs, architectures, kernel_sizes, num_featureses, num_layerses, loss_types, losses, loss_lambdas, input_domains, output_domains, nonlinearities, num_epochses, batch_sizes):
+for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std, architecture, kernel_size, num_features, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, num_epochs, batch_size in itertools.product(
+        datasets, tasks, us_fracs, mot_fracs, max_htranses, max_vtranses, max_rots, noise_stds, architectures, kernel_sizes, num_featureses, num_layerses, loss_types, losses, loss_lambdas, input_domains, output_domains, nonlinearities, num_epochses, batch_sizes):
     base_dir = os.path.join(filepaths.CONFIG_DIR, exp_name)
     ini_filename = dataset
     for name in [
             task,
-            corruption_frac,
+            us_frac,
+            mot_frac,
+            max_htrans,
+            max_vtrans,
+            max_rot,
+            noise_std,
             architecture,
             kernel_size,
             num_features,
@@ -81,7 +91,12 @@ for dataset, task, corruption_frac, architecture, kernel_size, num_features, num
         f.write('[DATA]\n')
         f.write('dataset = ' + dataset + '\n')
         f.write('task = ' + task + '\n')
-        f.write('corruption_frac = ' + corruption_frac + '\n')
+        f.write('us_frac = ' + us_frac + '\n')
+        f.write('mot_frac = ' + mot_frac + '\n')
+        f.write('max_htrans = ' + max_htrans + '\n')
+        f.write('max_vtrans = ' + max_vtrans + '\n')
+        f.write('max_rot = ' + max_rot + '\n')
+        f.write('noise_std = ' + noise_std + '\n')
 
         f.write('\n')
 
