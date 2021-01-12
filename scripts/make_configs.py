@@ -17,16 +17,16 @@ import numpy as np
 
 import filepaths
 
-exp_name = 'undersample_example'
+exp_name = 'cross_model_comparison'
 
 # Customizable fields
 datasets = ['MRI']
-tasks = ['undersample']
+tasks = ['undersample_motion']
 us_fracs = ['0.75']
-mot_fracs = ['None']
-max_htranses = ['None']
-max_vtranses = ['None']
-max_rots = ['None']
+mot_fracs = ['0.03']
+max_htranses = ['0.03']
+max_vtranses = ['0.03']
+max_rots = ['0.03']
 noise_stds = ['None']
 
 architectures = [
@@ -35,7 +35,7 @@ architectures = [
     'ALTERNATING_RESIDUAL']
 kernel_sizes = ['9']
 num_featureses = ['32']
-num_layerses = ['8','16']
+num_layerses = ['10','20']
 loss_types = ['compimage']
 losses = ['L1']
 loss_lambdas = ['0.1']
@@ -77,8 +77,8 @@ for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std
     # Excluded configs
     if(input_domain == output_domain and
        not(input_domain == 'IMAGE' and nonlinearity == '3-piece') and
-       not(architecture != 'CONV_RESIDUAL' and num_layers == '16') and
-       not(architecture == 'CONV_RESIDUAL' and num_layers == '8') and
+       not(architecture != 'CONV_RESIDUAL' and num_layers == '20') and
+       not(architecture == 'CONV_RESIDUAL' and num_layers == '10') and
        not(input_domain == 'FREQ' and nonlinearity == 'relu') and
        not(input_domain == 'IMAGE' and architecture != 'CONV_RESIDUAL') and
        not(input_domain == 'FREQ' and architecture == 'CONV')):

@@ -355,6 +355,126 @@ def generate_noisy_data(
         yield(inputs, outputs)
 
 
+def generate_undersampled_motion_data(
+        images,
+        input_domain,
+        output_domain,
+        us_frac,
+        mot_frac,
+        max_htrans,
+        max_vtrans,
+        max_rot,
+        batch_size=10):
+    """Generator that yields batches of motion-corrupted, undersampled input and correct output data.
+
+    For corrupted inputs, select some lines at which motion occurs; randomly generate and apply translation/rotations at those lines.
+
+    Args:
+      images(float): Numpy array of input images, of shape (num_images,n,n)
+      input_domain(str): The domain of the network input; 'FREQ' or 'IMAGE'
+      output_domain(str): The domain of the network output; 'FREQ' or 'IMAGE'
+      us_frac(float): Fraction of lines at which motion occurs.
+      mot_frac(float): Fraction of lines at which motion occurs.
+      max_htrans(float): Maximum fraction of image width for a translation.
+      max_vtrans(float): Maximum fraction of image height for a translation.
+      max_rot(float): Maximum fraction of 360 degrees for a rotation.
+      batch_size(int, optional): Number of input-output pairs in each batch (Default value = 10)
+
+    Returns:
+      inputs: Tuple of corrupted input data and correct output data, both numpy arrays of shape (batch_size,n,n,2).
+
+    """
+    def get_us_motion_mask(arr_shape, us_frac):
+        """ Based on https://github.com/facebookresearch/fastMRI/blob/master/common/subsample.py. """
+        num_cols = arr_shape[1]
+        if(us_frac != 1):
+            acceleration = int(1 / (1 - us_frac))
+            center_fraction = (1 - us_frac) * 0.08 / 0.25
+
+            # Create the mask
+            num_low_freqs = int(round(num_cols * center_fraction))
+            prob = (num_cols / acceleration - num_low_freqs) / \
+                (num_cols - num_low_freqs)
+            mask_inds = np.random.uniform(size=num_cols) < prob
+            pad = (num_cols - num_low_freqs + 1) // 2
+            mask_inds[pad:pad + num_low_freqs] = True
+
+            mask = np.zeros(arr_shape)
+            mask[:, mask_inds] = 1
+
+            return np.fft.ifftshift(mask).T
+
+        else:
+            return(np.ones(arr_shape)).T
+
+    num_batches = np.ceil(len(images) / batch_size)
+    img_shape = images.shape[1]
+
+    reim_images = images.copy()
+    images = utils.split_reim(images)
+    spectra = utils.convert_to_frequency_domain(images)
+
+    while True:
+        n = images.shape[1]
+        batch_inds = np.random.randint(0, images.shape[0], batch_size)
+
+        inputs = np.empty((0, n, n, 2))
+        outputs = np.empty((0, n, n, 2))
+        masks = np.empty((0, n, n, 2))
+
+        for j in batch_inds:
+
+            true_img = np.expand_dims(images[j, :, :, :], 0)
+
+            img_size = images.shape[1]
+            num_points = int(np.random.random() * mot_frac * n)
+            coord_list = np.sort(
+                np.random.choice(
+                    img_size,
+                    size=num_points,
+                    replace=False))
+            num_pix = np.zeros((num_points, 2))
+            angle = np.zeros(num_points)
+
+            max_htrans_pix = n * max_htrans
+            max_vtrans_pix = n * max_vtrans
+            max_rot_deg = 360 * max_rot
+
+            num_pix[:, 0] = np.random.random(
+                num_points) * (2 * max_htrans_pix) - max_htrans_pix
+            num_pix[:, 1] = np.random.random(
+                num_points) * (2 * max_vtrans_pix) - max_vtrans_pix
+            angle = np.random.random(num_points) * \
+                (2 * max_rot_deg) - max_rot_deg
+
+            corrupt_k, true_k = motion.add_rotation_and_translations(
+                reim_images[j, :, :], coord_list, angle, num_pix)
+            true_k = utils.split_reim(np.expand_dims(true_k, 0))
+            true_img = utils.convert_to_image_domain(true_k)
+            corrupt_k = utils.split_reim(np.expand_dims(corrupt_k, 0))
+
+            mask = get_us_motion_mask(true_img.shape[1:3], us_frac)
+            r_mask = np.expand_dims(
+                np.repeat(mask[:, :, np.newaxis], 2, axis=-1), 0)
+
+            corrupt_k *= r_mask
+            corrupt_img = utils.convert_to_image_domain(corrupt_k)
+
+            nf = np.max(corrupt_img)
+
+            if(input_domain == 'FREQ'):
+                inputs = np.append(inputs, corrupt_k / nf, axis=0)
+            elif(input_domain == 'IMAGE'):
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
+
+            if(output_domain == 'FREQ'):
+                outputs = np.append(outputs, true_k / nf, axis=0)
+            elif(output_domain == 'IMAGE'):
+                outputs = np.append(outputs, true_img / nf, axis=0)
+
+        yield(inputs, outputs)
+
+
 def generate_data(
         images,
         exp_config,
@@ -403,4 +523,15 @@ def generate_data(
             input_domain,
             output_domain,
             exp_config.noise_std,
+            batch_size)
+    elif(task == 'undersample_motion'):
+        return generate_undersampled_motion_data(
+            images,
+            input_domain,
+            output_domain,
+            exp_config.us_frac,
+            exp_config.mot_frac,
+            exp_config.max_htrans,
+            exp_config.max_vtrans,
+            exp_config.max_rot,
             batch_size)
