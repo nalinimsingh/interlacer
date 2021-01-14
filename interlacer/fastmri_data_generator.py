@@ -96,6 +96,7 @@ def generate_undersampled_data(
         input_domain,
         output_domain,
         corruption_frac,
+        enforce_dc,
         fs=False,
         batch_size=16):
     """Generator that yields batches of undersampled input and correct output data.
@@ -140,7 +141,7 @@ def generate_undersampled_data(
                 n, num_points, replace=False)
 
             corrupt_k = kspace[j, :, :] * mask
-            
+
             # Bring majority of values to 0-1 range.
             corrupt_k = utils.split_reim(np.expand_dims(corrupt_k, 0)) * 500
 
@@ -150,6 +151,7 @@ def generate_undersampled_data(
 
             if(input_domain == 'FREQ'):
                 inputs = np.append(inputs, corrupt_k / nf, axis=0)
+                masks = np.append(masks, r_mask, axis=0)
             elif(input_domain == 'IMAGE'):
                 inputs = np.append(inputs, corrupt_img / nf, axis=0)
 
@@ -158,9 +160,10 @@ def generate_undersampled_data(
             elif(output_domain == 'IMAGE'):
                 outputs = np.append(outputs, true_img / nf, axis=0)
 
-            masks = np.append(masks, r_mask, axis=0)
-
-        yield(inputs, outputs)
+        if(enforce_dc):
+            yield((inputs, masks), outputs)
+        else:
+            yield(inputs, outputs)
 
 
 def generate_data(
@@ -187,6 +190,7 @@ def generate_data(
     input_domain = exp_config.input_domain
     output_domain = exp_config.output_domain
     us_frac = exp_config.us_frac
+    enforce_dc = exp_config.enforce_dc
     batch_size = exp_config.batch_size
 
     if(task == 'undersample'):
@@ -195,5 +199,6 @@ def generate_data(
             input_domain,
             output_domain,
             us_frac,
+            enforce_dc,
             fs=fs,
             batch_size=batch_size)

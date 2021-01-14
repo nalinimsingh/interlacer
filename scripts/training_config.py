@@ -94,6 +94,8 @@ class TrainingConfig:
             config, 'MODEL', 'output_domain', 'str')
         self.nonlinearity = read_or_default(
             config, 'MODEL', 'nonlinearity', 'str')
+        self.enforce_dc = read_or_default(
+            config, 'MODEL', 'enforce_dc', 'bool')
 
         self.num_epochs = read_or_default(
             config, 'TRAINING', 'num_epochs', 'int')
@@ -122,6 +124,7 @@ class TrainingConfig:
                 self.input_domain,
                 self.output_domain,
                 self.nonlinearity,
+                self.enforce_dc,
                 self.num_epochs,
                 self.batch_size]:
             self.job_name += '-' + str(tag)

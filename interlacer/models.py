@@ -13,7 +13,8 @@ def get_conv_no_residual_model(
         nonlinearity,
         kernel_size,
         num_features,
-        num_layers):
+        num_layers,
+        enforce_dc):
     """Generic conv model without residual convolutions.
 
     Args:
@@ -28,6 +29,9 @@ def get_conv_no_residual_model(
 
     """
     inputs = Input(input_size)
+    if(enforce_dc):
+        masks = Input(input_size)
+
     prev_layer = inputs
     for i in range(num_layers):
         conv = layers.BatchNormConv(num_features, kernel_size)(prev_layer)
@@ -35,7 +39,12 @@ def get_conv_no_residual_model(
         prev_layer = nonlinear
     output = Conv2D(2, kernel_size, activation=None, padding='same',
                     kernel_initializer='he_normal')(prev_layer)
-    model = keras.models.Model(inputs=inputs, outputs=output)
+
+    if(enforce_dc):
+        output = masks * inputs + (1 - masks) * output
+        model = keras.models.Model(inputs=(inputs, masks), outputs=output)
+    else:
+        model = keras.models.Model(inputs=inputs, outputs=output)
     return model
 
 
@@ -44,7 +53,8 @@ def get_conv_residual_model(
         nonlinearity,
         kernel_size,
         num_features,
-        num_layers):
+        num_layers,
+        enforce_dc):
     """Generic conv model with residual convolutions.
 
     Args:
@@ -59,6 +69,8 @@ def get_conv_residual_model(
 
     """
     inputs = Input(input_size)
+    if(enforce_dc):
+        masks = Input(input_size)
 
     prev_layer = inputs
     for i in range(num_layers):
@@ -68,7 +80,12 @@ def get_conv_residual_model(
             tf.tile(inputs, [1, 1, 1, int(num_features / 2)])
     output = Conv2D(2, kernel_size, activation=None, padding='same',
                     kernel_initializer='he_normal')(prev_layer) + inputs
-    model = keras.models.Model(inputs=inputs, outputs=output)
+
+    if(enforce_dc):
+        output = masks * inputs + (1 - masks) * output
+        model = keras.models.Model(inputs=(inputs, masks), outputs=output)
+    else:
+        model = keras.models.Model(inputs=inputs, outputs=output)
     return model
 
 
@@ -77,7 +94,8 @@ def get_interlacer_residual_model(
         nonlinearity,
         kernel_size,
         num_features,
-        num_layers):
+        num_layers,
+        enforce_dc):
     """Interlacer model with residual convolutions.
 
     Returns a model that takes a frequency-space input (of shape (batch_size, n, n, 2)) and returns a frequency-space output of the same size, comprised of interlacer layers and with connections from the input to each layer.
@@ -94,6 +112,9 @@ def get_interlacer_residual_model(
 
     """
     inputs = Input(input_size)
+    if(enforce_dc):
+        masks = Input(input_size)
+
     n = inputs.get_shape().as_list()[1]
     inp_real = tf.expand_dims(inputs[:, :, :, 0], -1)
     inp_imag = tf.expand_dims(inputs[:, :, :, 1], -1)
@@ -119,14 +140,19 @@ def get_interlacer_residual_model(
 
     for i in range(num_layers):
         img_conv, k_conv = layers.Interlacer(
-                num_features, kernel_size)([img_in, freq_in])
+            num_features, kernel_size)([img_in, freq_in])
 
         freq_in = k_conv + inp_copy
         img_in = img_conv + inp_img_copy
 
     output = Conv2D(2, kernel_size, activation=None, padding='same',
                     kernel_initializer='he_normal')(freq_in) + inputs
-    model = keras.models.Model(inputs=inputs, outputs=output)
+
+    if(enforce_dc):
+        output = masks * inputs + (1 - masks) * output
+        model = keras.models.Model(inputs=(inputs, masks), outputs=output)
+    else:
+        model = keras.models.Model(inputs=inputs, outputs=output)
     return model
 
 
@@ -135,7 +161,8 @@ def get_alternating_residual_model(
         nonlinearity,
         kernel_size,
         num_features,
-        num_layers):
+        num_layers,
+        enforce_dc):
     """Alternating model with residual convolutions.
 
     Returns a model that takes a frequency-space input (of shape (batch_size, n, n, 2)) and returns a frequency-space output of the same size, comprised of alternating frequency- and image-space convolutional layers and with connections from the input to each layer.
@@ -152,6 +179,9 @@ def get_alternating_residual_model(
 
     """
     inputs = Input(input_size)
+    if(enforce_dc):
+        masks = Input(input_size)
+
     n = inputs.get_shape().as_list()[1]
     inp_real = tf.expand_dims(inputs[:, :, :, 0], -1)
     inp_imag = tf.expand_dims(inputs[:, :, :, 1], -1)
@@ -200,5 +230,10 @@ def get_alternating_residual_model(
 
     output = Conv2D(2, kernel_size, activation=None, padding='same',
                     kernel_initializer='he_normal')(prev_layer) + inputs
-    model = keras.models.Model(inputs=inputs, outputs=output)
+
+    if(enforce_dc):
+        output = masks * inputs + (1 - masks) * output
+        model = keras.models.Model(inputs=(inputs, masks), outputs=output)
+    else:
+        model = keras.models.Model(inputs=inputs, outputs=output)
     return model

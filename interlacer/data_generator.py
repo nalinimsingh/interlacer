@@ -98,6 +98,7 @@ def generate_undersampled_data(
         input_domain,
         output_domain,
         corruption_frac,
+        enforce_dc,
         batch_size=10):
     """Generator that yields batches of undersampled input and correct output data.
 
@@ -157,7 +158,10 @@ def generate_undersampled_data(
             elif(output_domain == 'IMAGE'):
                 outputs = np.append(outputs, true_img / nf, axis=0)
 
-        yield(inputs, outputs)
+        if(enforce_dc):
+            yield((inputs, masks), outputs)
+        else:
+            yield(inputs, outputs)
 
 
 def generate_motion_data(
@@ -505,6 +509,7 @@ def generate_data(
             input_domain,
             output_domain,
             exp_config.us_frac,
+            exp_config.enforce_dc,
             batch_size)
     elif(task == 'motion'):
         return generate_motion_data(
