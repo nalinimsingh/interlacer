@@ -105,6 +105,8 @@ class Interlacer(Layer):
         self.freq_mix = Mix()
         self.img_bnconv = BatchNormConv(self.features, self.kernel_size)
         self.freq_bnconv = BatchNormConv(self.features, self.kernel_size)
+        self.img_bnconv2 = BatchNormConv(self.features, self.kernel_size)
+        self.freq_bnconv2 = BatchNormConv(self.features, self.kernel_size)
         super(Interlacer, self).build(input_shape)
 
     def call(self, x):
@@ -135,7 +137,13 @@ class Interlacer(Layer):
         img_conv = self.img_bnconv(mixed_ilayer_input)
         img_nonlinear = get_nonlinear_layer('relu')(img_conv)
 
+        img_conv = self.img_bnconv2(img_nonlinear)
+        img_nonlinear = get_nonlinear_layer('relu')(img_conv)
+
         k_conv = self.freq_bnconv(mixed_flayer_input)
+        k_nonlinear = get_nonlinear_layer('3-piece')(k_conv)
+
+        k_conv = self.freq_bnconv2(k_nonlinear)
         k_nonlinear = get_nonlinear_layer('3-piece')(k_conv)
 
         return (img_nonlinear, k_nonlinear)
