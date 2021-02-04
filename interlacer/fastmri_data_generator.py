@@ -17,8 +17,7 @@ def get_fastmri_slices_from_dir(
         image_dir,
         batch_size,
         fs=False,
-        corruption_frac=1.0,
-        return_masks=False):
+        corruption_frac=1.0):
     """Load and normalize MRI dataset.
 
     Args:
@@ -26,7 +25,6 @@ def get_fastmri_slices_from_dir(
       batch_size(int): Number of input-output pairs in each batch
       fs(Boolean): Whether to read images with fat suppression (True) or without (False)
       corruption_frac(float): Probability with which to zero a line in k-space
-      return_masks(Boolean): Whether to return k-space masks for all images in batch
 
     Returns:
       float: A numpy array of size (num_images, n, n) containing all image slices
@@ -58,6 +56,8 @@ def get_fastmri_slices_from_dir(
                 mask = get_undersampling_mask(
                     sl_k.shape, corruption_frac)
 
+                sl_k *= mask
+
                 # Bring k-space down to square size
                 sl_k = np.fft.ifftshift(sl_k)
                 sl_img_unshift = np.fft.fftshift(np.fft.ifft2(sl_k))
@@ -65,23 +65,17 @@ def get_fastmri_slices_from_dir(
                 y_mid = int(sl_img_unshift.shape[1] / 2)
                 sl_img_crop = sl_img_unshift[x_mid -
                                              n:x_mid + n, y_mid - n:y_mid + n]
-                mask_crop = mask[x_mid - n:x_mid + n, y_mid - n:y_mid + n]
-                mask_crop = np.fft.fftshift(mask_crop)
                 sl_k = np.fft.fft2(sl_img_crop)
 
                 slices.append(sl_img)
                 kspace.append(sl_k)
-                masks.append(mask_crop)
                 i += 1
             else:
                 pass
     slices = np.asarray(slices)
     kspace = np.asarray(kspace)
-    masks = np.asarray(masks)
-    if(return_masks):
-        return slices, kspace, masks
-    else:
-        return slices, kspace
+
+    return slices, kspace
 
 
 def get_undersampling_mask(arr_shape, us_frac):
@@ -135,8 +129,8 @@ def generate_undersampled_data(
     """
 
     while True:
-        images, kspace, masks = get_fastmri_slices_from_dir(
-            image_dir, batch_size, fs, corruption_frac=corruption_frac, return_masks=True)
+        images, kspace = get_fastmri_slices_from_dir(
+            image_dir, batch_size, fs, corruption_frac=corruption_frac)
 
         images = utils.split_reim(images)
         spectra = utils.convert_to_frequency_domain(images)
@@ -145,31 +139,22 @@ def generate_undersampled_data(
 
         inputs = np.empty((0, n, n, 2))
         outputs = np.empty((0, n, n, 2))
-        r_masks = np.empty((0, n, n, 2))
 
         for j in range(batch_size):
+            corrupt_k = kspace[j, :, :]
+
             true_img = np.expand_dims(images[j, :, :, :], 0)
             true_k = np.expand_dims(spectra[j, :, :, :], 0)
-            mask = masks[j, :, :]
-            r_mask = np.expand_dims(
-                np.repeat(mask[:, :, np.newaxis], 2, axis=-1), 0)
-
-            num_points = int(n * corruption_frac)
-            coord_list = np.random.choice(
-                n, num_points, replace=False)
-
-            corrupt_k = kspace[j, :, :] * mask
 
             # Bring majority of values to 0-1 range.
             corrupt_k = utils.split_reim(np.expand_dims(corrupt_k, 0)) * 500
 
             corrupt_img = utils.convert_to_image_domain(corrupt_k)
 
-            nf = np.max(np.abs(corrupt_img))
+            nf = np.percentile(np.abs(corrupt_img), 95)
 
             if(input_domain == 'FREQ'):
                 inputs = np.append(inputs, corrupt_k / nf, axis=0)
-                r_masks = np.append(r_masks, r_mask, axis=0)
             elif(input_domain == 'IMAGE'):
                 inputs = np.append(inputs, corrupt_img / nf, axis=0)
 
@@ -178,10 +163,7 @@ def generate_undersampled_data(
             elif(output_domain == 'IMAGE'):
                 outputs = np.append(outputs, true_img / nf, axis=0)
 
-        if(enforce_dc):
-            yield((inputs, r_masks), outputs)
-        else:
-            yield(inputs, outputs)
+        yield(inputs, outputs)
 
 
 def generate_data(
