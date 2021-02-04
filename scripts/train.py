@@ -106,7 +106,7 @@ else:
     print('Generated validation generator')
 
 # Pick architecture
-if(exp_config.dataset == 'FASTMRI'):
+if('FASTMRI' in exp_config.dataset):
     n = 320
 else:
     n = img_train.shape[1]
@@ -265,13 +265,12 @@ if(debug):
     val_steps = 1
 else:
     num_epochs = exp_config.num_epochs
-    steps_per_epoch = int(img_train.shape[0] / exp_config.batch_size)
     val_steps = 8
 
 model.fit_generator(
     train_generator,
     epochs=num_epochs,
-    steps_per_epoch=steps_per_epoch,
+    steps_per_epoch=100,
     validation_data=val_generator,
     validation_steps=val_steps,
     callbacks=[
