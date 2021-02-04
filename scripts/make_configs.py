@@ -17,32 +17,30 @@ import numpy as np
 
 import filepaths
 
-exp_name = 'cross_model_comparison'
+exp_name = 'wide_2conv_interlacer'
 
 # Customizable fields
-datasets = ['MRI']
-tasks = ['undersample_motion']
-us_fracs = ['0.75']
-mot_fracs = ['0.03']
-max_htranses = ['0.03']
-max_vtranses = ['0.03']
-max_rots = ['0.03']
+datasets = ['FASTMRI','FASTMRI_FS']
+tasks = ['undersample']
+us_fracs = ['0.75','0.875']
+mot_fracs = ['None']
+max_htranses = ['None']
+max_vtranses = ['None']
+max_rots = ['None']
 noise_stds = ['None']
 
 architectures = [
-    'CONV_RESIDUAL',
-    'INTERLACER_RESIDUAL',
-    'ALTERNATING_RESIDUAL']
+    'INTERLACER_RESIDUAL']
 kernel_sizes = ['9']
-num_featureses = ['32']
-num_layerses = ['10','20']
-loss_types = ['compimage']
+num_featureses = ['128']
+num_layerses = ['10']
+loss_types = ['ssim']
 losses = ['L1']
 loss_lambdas = ['0.1']
 input_domains = ['IMAGE', 'FREQ']
 output_domains = ['IMAGE', 'FREQ']
 nonlinearities = ['relu', '3-piece']
-enforce_dcs = ['True', 'False']
+enforce_dcs = ['False']
 
 num_epochses = ['5000']
 batch_sizes = ['4']
