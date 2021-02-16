@@ -1,10 +1,14 @@
+import sys
+
 import numpy as np
 import tensorflow.compat.v1 as tf
 from tensorflow.keras import backend as K
 
 from interlacer import utils
-
-import lpips_tf
+try:
+    import lpips_tf
+except:
+    pass
 
 
 def join_reim_mag_output(tensor):
@@ -169,40 +173,40 @@ def joint_img_freq_loss(output_domain, loss, loss_lambda):
         return(image_loss(output_domain, loss)(y_true, y_pred) + loss_lambda * fourier_loss(output_domain, loss)(y_true, y_pred))
     return joint_loss
 
+if 'lpips_tf' in sys.modules:
+    def lpips(output_domain):
+        """Specifies a function which computes the appropriate loss function.
 
-def lpips(output_domain):
-    """Specifies a function which computes the appropriate loss function.
-    
-    Loss function here is SSIM on image-space data.
+        Loss function here is SSIM on image-space data.
 
-    Args:
-      output_domain(str): Network output domain ('FREQ' or 'IMAGE')
+        Args:
+          output_domain(str): Network output domain ('FREQ' or 'IMAGE')
 
-    Returns:
-      Function computing loss value from a true and predicted input
+        Returns:
+          Function computing loss value from a true and predicted input
 
-    """
-    if(output_domain == 'IMAGE'):
-        def image_lpips(y_true, y_pred):
-            y_true = join_reim_mag_output(y_true)
-            y_pred = join_reim_mag_output(y_pred)
+        """
+        if(output_domain == 'IMAGE'):
+            def image_lpips(y_true, y_pred):
+                y_true = join_reim_mag_output(y_true)
+                y_pred = join_reim_mag_output(y_pred)
 
-            y_true = K.tile(y_true, [1, 1, 1, 3])
-            y_pred = K.tile(y_pred, [1, 1, 1, 3])
+                y_true = K.tile(y_true, [1, 1, 1, 3])
+                y_pred = K.tile(y_pred, [1, 1, 1, 3])
 
-            return lpips_tf.lpips(y_true, y_pred, model='net-lin', net='alex')
-        return image_lpips
-    elif(output_domain == 'FREQ'):
-        def image_lpips(y_true, y_pred):
-            y_true_image = utils.convert_tensor_to_image_domain(y_true)
-            y_pred_image = utils.convert_tensor_to_image_domain(y_pred)
-            y_true = join_reim_mag_output(y_true_image)
-            y_pred = join_reim_mag_output(y_pred_image)
+                return lpips_tf.lpips(y_true, y_pred, model='net-lin', net='alex')
+            return image_lpips
+        elif(output_domain == 'FREQ'):
+            def image_lpips(y_true, y_pred):
+                y_true_image = utils.convert_tensor_to_image_domain(y_true)
+                y_pred_image = utils.convert_tensor_to_image_domain(y_pred)
+                y_true = join_reim_mag_output(y_true_image)
+                y_pred = join_reim_mag_output(y_pred_image)
 
-            y_true = K.tile(y_true, [1, 1, 1, 3])
-            y_pred = K.tile(y_pred, [1, 1, 1, 3])
-            return lpips_tf.lpips(y_true, y_pred, model='net-lin', net='alex')
-        return image_lpips
+                y_true = K.tile(y_true, [1, 1, 1, 3])
+                y_pred = K.tile(y_pred, [1, 1, 1, 3])
+                return lpips_tf.lpips(y_true, y_pred, model='net-lin', net='alex')
+            return image_lpips
 
 
 def ssim(output_domain):
