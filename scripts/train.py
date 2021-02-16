@@ -10,6 +10,7 @@
 
     --debug(Boolean): Only train for 5 epochs on limited data, and delete temp logs
     --experiment(string): Optional label for a higher-level directory in which to store this run's log directory
+    --initmodel(string): Path to model directory for loading initialization weights
     --suffix(string): Optional, arbitrary tag to append to job name
 """
 
@@ -26,6 +27,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.datasets import mnist
 
 import filepaths
+import load_model_utils
 import training_config
 from interlacer import (data_generator, fastmri_data_generator, layers, losses,
                         models, utils)
@@ -50,6 +52,7 @@ parser = argparse.ArgumentParser(
     description='Train a Fourier-domain neural network to correct corrupted k-space data.')
 parser.add_argument('config', help='Path to .ini config file.')
 parser.add_argument('--experiment', help='Experiment folder name.')
+parser.add_argument('--initmodel', help='Path to folder with model with which to initialize weights.')
 parser.add_argument(
     '--suffix',
     help='Descriptive suffix appended to job name.')
@@ -62,6 +65,7 @@ parser.add_argument(
 args = parser.parse_args()
 config_path = args.config
 experiment = args.experiment
+initmodel = args.initmodel
 suffix = args.suffix
 debug = args.debug
 
@@ -260,6 +264,12 @@ print('Compiled model')
 
 if(debug):
     print('Number of parameters: ' + str(model.count_params()))
+
+# Load pre-trained weights, if specified
+if(initmodel is not None):
+    ckpt = str(load_model_utils.get_best_ckpt(initmodel)).zfill(4)
+    ckptname = 'cp-' + ckpt + '.' + 'ckpt'
+    model.load_weights(os.path.join(initmodel, ckptname))
 
 # Train model
 if(debug):
