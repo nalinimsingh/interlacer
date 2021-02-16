@@ -218,7 +218,10 @@ elif(exp_config.loss_type == 'ssim'):
 elif(exp_config.loss_type == 'ssim_ms'):
     used_loss = losses.ssim_multiscale(exp_config.output_domain)
 elif(exp_config.loss_type == 'lpips'):
-    used_loss = losses.lpips(exp_config.output_domain)
+    try:
+        used_loss = losses.lpips(exp_config.output_domain)
+    except:
+        raise NameError('LPIPS not defined.')
 elif(exp_config.loss_type == 'psnr'):
     used_loss = losses.psnr(exp_config.output_domain)
 else:
