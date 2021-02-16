@@ -12,6 +12,7 @@
     --experiment(string): Optional label for a higher-level directory in which to store this run's log directory
     --initmodel(string): Path to model directory for loading initialization weights
     --suffix(string): Optional, arbitrary tag to append to job name
+    --verbose(Boolean): Whether to log all training details
 """
 
 import argparse
@@ -60,12 +61,14 @@ parser.add_argument(
     '--debug',
     help='Boolean indicating whether to run small-scale training experiment.',
     action='store_true')
+parser.add_argument('--verbose', help='Whether to print tf training details to log.', default=True)
 
 # Set up config
 args = parser.parse_args()
 config_path = args.config
 experiment = args.experiment
 initmodel = args.initmodel
+verbose = args.verbose
 suffix = args.suffix
 debug = args.debug
 
@@ -289,4 +292,5 @@ model.fit_generator(
     callbacks=[
         cp_callback,
         tb_callback],
+    verbose=verbose,
     workers=1)
