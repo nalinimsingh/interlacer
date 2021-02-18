@@ -17,7 +17,7 @@ import numpy as np
 
 import filepaths
 
-exp_name = 'esc_recon_ssim'
+exp_name = 'esc_recon_compimageL1'
 
 # Customizable fields
 datasets = ['FASTMRI','FASTMRI_FS']
@@ -34,7 +34,7 @@ architectures = [
 kernel_sizes = ['9']
 num_featureses = ['128']
 num_layerses = ['10']
-loss_types = ['ssim']
+loss_types = ['compimage']
 losses = ['L1']
 loss_lambdas = ['0.1']
 input_domains = ['IMAGE', 'FREQ']
