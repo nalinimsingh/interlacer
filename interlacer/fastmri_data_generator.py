@@ -48,7 +48,7 @@ def get_fastmri_slices_from_dir(
 
                 slice_i = np.random.randint(0, n_slices)
 
-                sl_img = f['reconstruction_rss'][slice_i, :, :]
+                sl_img = f['reconstruction_esc'][slice_i, :, :]
                 n = int(sl_img.shape[0] / 2)
 
                 sl_k = f['kspace'][slice_i, :, :]
