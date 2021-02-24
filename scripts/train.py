@@ -243,7 +243,6 @@ joint = losses.joint_img_freq_loss(
     exp_config.output_domain,
     'L1',
     exp_config.loss_lambda)
-lpips = losses.lpips(exp_config.output_domain)
 ssim = losses.ssim(exp_config.output_domain)
 ssim_ms = losses.ssim_multiscale(exp_config.output_domain)
 psnr = losses.psnr(exp_config.output_domain)
@@ -259,7 +258,6 @@ model.compile(
         image_l1,
         image_l2,
         joint,
-        lpips,
         ssim,
         ssim_ms,
         psnr])
