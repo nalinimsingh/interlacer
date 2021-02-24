@@ -220,6 +220,9 @@ elif(exp_config.loss_type == 'joint_ssim'):
 elif(exp_config.loss_type == 'joint_ssim_image'):
     used_loss = losses.joint_ssim_ms_image_loss(
         exp_config.output_domain, exp_config.loss, exp_config.loss_lambda)
+elif(exp_config.loss_type == 'joint_fastmri'):
+    used_loss = losses.joint_fastmri_loss(
+        exp_config.output_domain, exp_config.loss)
 elif(exp_config.loss_type == 'ssim'):
     used_loss = losses.ssim(exp_config.output_domain)
 elif(exp_config.loss_type == 'ssim_ms'):
@@ -243,6 +246,8 @@ joint = losses.joint_img_freq_loss(
     exp_config.output_domain,
     'L1',
     exp_config.loss_lambda)
+joint_fastmri = losses.joint_fastmri_loss(
+    exp_config.output_domain, exp_config.loss)
 ssim = losses.ssim(exp_config.output_domain)
 ssim_ms = losses.ssim_multiscale(exp_config.output_domain)
 psnr = losses.psnr(exp_config.output_domain)
@@ -258,6 +263,7 @@ model.compile(
         image_l1,
         image_l2,
         joint,
+        joint_fastmri,
         ssim,
         ssim_ms,
         psnr])

@@ -205,13 +205,32 @@ if 'lpips_tf' in sys.modules:
 
                 y_true = K.tile(y_true, [1, 1, 1, 3])
                 y_pred = K.tile(y_pred, [1, 1, 1, 3])
-                return lpips_tf.lpips(y_true, y_pred, model='net-lin', net='alex')
+                return lpips_tf.lpips(
+                    y_true, y_pred, model='net-lin', net='alex')
             return image_lpips
+
+
+def joint_fastmri_loss(output_domain, loss):
+    """Specifies a function which computes the appropriate loss function.
+
+    Loss function here is a combination of SSIM, PSNR, and componentwise error.
+
+    Args:
+      output_domain(str): Network output domain ('FREQ' or 'IMAGE')
+      loss(str): Loss type ('L1' or 'L2')
+
+    Returns:
+      Function computing loss value from a true and predicted input
+
+    """
+    def combined_loss(y_true, y_pred):
+        return(ssim(output_domain)(y_true, y_pred) + 1 / 33.0 * psnr(output_domain)(y_true, y_pred) + 20 * comp_image_loss(output_domain, loss)(y_true, y_pred))
+    return combined_loss
 
 
 def ssim(output_domain):
     """Specifies a function which computes the appropriate loss function.
-    
+
     Loss function here is SSIM on image-space data.
 
     Args:
