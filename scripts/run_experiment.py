@@ -40,7 +40,7 @@ for exp_config in [i for i in os.listdir(
             'training/'),
         exp_config_name +
         '/log.txt')
-    command = 'srun -p gpu --gres=gpu:2080ti:1 -t 0 python scripts/train.py ' + \
+    command = 'srun -p gpu --gres=gpu:2080ti:1 --job-name ' + experiment + ' -t 0 python scripts/train.py ' + \
         this_config + ' --experiment ' + experiment
     if(debug):
         command += ' --debug'
