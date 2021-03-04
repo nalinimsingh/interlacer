@@ -191,7 +191,9 @@ with open(summary_file, 'w') as fh:
 
 # Tensorboard
 tb_dir = os.path.join(checkpoint_dir, 'tensorboard/')
-if os.path.exists(tb_dir):
+if(initmodel is not None):
+    pass
+elif os.path.exists(tb_dir):
     raise ValueError(
         'Tensorboard logs have already been created under this name.')
 else:
@@ -274,7 +276,8 @@ if(debug):
 
 # Load pre-trained weights, if specified
 if(initmodel is not None):
-    ckpt = str(load_model_utils.get_best_ckpt(initmodel)).zfill(4)
+    ckpt_num = load_model_utils.get_best_ckpt(initmodel)
+    ckpt = str(ckpt_num).zfill(4)
     ckptname = 'cp-' + ckpt + '.' + 'ckpt'
     model.load_weights(os.path.join(initmodel, ckptname))
 
@@ -287,9 +290,15 @@ else:
     num_epochs = exp_config.num_epochs
     val_steps = 8
 
+if(initmodel is not None):
+    init_epoch = ckpt_num
+else:
+    init_epoch = 0
+
 model.fit_generator(
     train_generator,
     epochs=num_epochs,
+    initial_epoch=init_epoch,
     steps_per_epoch=100,
     validation_data=val_generator,
     validation_steps=val_steps,
