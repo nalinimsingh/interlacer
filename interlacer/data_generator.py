@@ -252,50 +252,6 @@ def generate_motion_data(
         yield(inputs, outputs)
 
 
-def generate_stored_motion_data(
-        images,
-        input_domain,
-        output_domain,
-        corruption_frac,
-        batch_size=10,
-        split='None'):
-    """Generator that reads stored batches of motion-corrupted input and correct output data.
-
-    Args:
-      images(float): Numpy array of input images, of shape (num_images,n,n)
-      input_domain(str): The domain of the network input; 'FREQ' or 'IMAGE'
-      output_domain(str): The domain of the network output; 'FREQ' or 'IMAGE'
-      corruption_frac(float): Fraction of lines at which motion occurs.
-      batch_size(int, optional): Number of input-output pairs in each batch (Default value = 10)
-      split:  (Default value = 'None')
-
-    Returns:
-      inputs: Tuple of corrupted input data and ground truth output data, both numpy arrays of shape (batch_size,n,n,2).
-
-    """
-    num_batches = np.int(images.shape[0] / batch_size)
-    base_dir = filepaths.MOTION_DATA_DIR
-    data_dir = os.path.join(base_dir, split)
-
-    while True:
-        i = np.random.randint(0, num_batches)
-        dir_str = os.path.join(
-            data_dir,
-            input_domain +
-            '-' +
-            input_domain +
-            '-' +
-            str(corruption_frac) +
-            '-' +
-            str(batch_size))
-
-        data = np.load(os.path.join(dir_str, str(i) + '.npz'))
-        m_input = data['m_input']
-        m_label = data['m_label']
-
-        yield(m_input, m_label)
-
-
 def generate_noisy_data(
         images,
         input_domain,
