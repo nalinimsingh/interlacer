@@ -124,11 +124,7 @@ def get_interlacer_residual_model(
     inp_copy = tf.reshape(tf.tile(tf.expand_dims(tf.concat(
         [inp_real, inp_imag], axis=3), 4), [1, 1, 1, 1, n_copies]), [-1, n, n, num_features])
 
-    complex_inputs = Permute((3, 1, 2))(utils.join_reim_channels(inputs))
-    inputs_img = utils.split_reim_channels(
-        Permute(
-            (2, 3, 1))(
-            tf.signal.ifft2d(complex_inputs)))
+    inputs_img = utils.convert_tensor_to_image_domain(inputs)
     inp_img_real = tf.expand_dims(inputs_img[:, :, :, 0], -1)
     inp_img_imag = tf.expand_dims(inputs_img[:, :, :, 1], -1)
 
@@ -191,11 +187,7 @@ def get_alternating_residual_model(
     inp_copy = tf.reshape(tf.tile(tf.expand_dims(tf.concat(
         [inp_real, inp_imag], axis=3), 4), [1, 1, 1, 1, n_copies]), [-1, n, n, num_features])
 
-    complex_inputs = Permute((3, 1, 2))(utils.join_reim_channels(inputs))
-    inputs_img = utils.split_reim_channels(
-        Permute(
-            (2, 3, 1))(
-            tf.signal.ifft2d(complex_inputs)))
+    inputs_img = utils.convert_tensor_to_image_domain(inputs)
     inp_img_real = tf.expand_dims(inputs_img[:, :, :, 0], -1)
     inp_img_imag = tf.expand_dims(inputs_img[:, :, :, 1], -1)
 
@@ -209,24 +201,13 @@ def get_alternating_residual_model(
             num_features, kernel_size)(prev_layer) + inp_copy
         nonlinear = layers.get_nonlinear_layer('3-piece')(k_conv)
 
-        joined_freq_in = utils.join_reim_channels(nonlinear)
-        complex_channels = Permute((3, 1, 2))(
-            joined_freq_in)
-        img = utils.split_reim_channels(
-            Permute(
-                (2, 3, 1))(
-                tf.signal.ifft2d(complex_channels)))
+        img = utils.convert_channels_to_image_domain(nonlinear)
 
         img_conv = layers.BatchNormConv(
             num_features, kernel_size)(img) + inp_img_copy
         nonlinear = layers.get_nonlinear_layer('relu')(img_conv)
-        complex_channels = Permute((3, 1, 2))(
-            utils.join_reim_channels(nonlinear))
-        k = utils.split_reim_channels(
-            Permute(
-                (2, 3, 1))(
-                tf.signal.fft2d(complex_channels)))
-        prev_layer = k
+
+        prev_layer = utils.convert_channels_to_frequency_domain(nonlinear)
 
     output = Conv2D(2, kernel_size, activation=None, padding='same',
                     kernel_initializer='he_normal')(prev_layer) + inputs

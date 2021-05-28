@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
+from tensorflow.keras import layers
 
 def split_reim(array):
     """Split a complex valued matrix into its real and imaginary parts.
@@ -114,7 +115,7 @@ def convert_to_frequency_domain(images):
 
     """
     n = images.shape[1]
-    spectra = split_reim(np.fft.fft2(join_reim(images), axes=(1, 2)))
+    spectra = split_reim(np.fft.fftshift(np.fft.fft2(join_reim(images), axes=(1, 2)), axes=(1,2)))
     return spectra
 
 
@@ -129,7 +130,27 @@ def convert_tensor_to_frequency_domain(images):
 
     """
     n = images.shape[1]
-    spectra = split_reim_tensor(tf.signal.fft2d(join_reim_tensor(images)))
+    spectra = split_reim_tensor(tf.signal.fftshift(tf.signal.fft2d(join_reim_tensor(images)), axes=(1,2)))
+    return spectra
+
+
+def convert_channels_to_frequency_domain(images):
+    """Convert a tensor of images to their Fourier transforms.
+
+    The tensor contains ch channels representing ch/2 real parts and ch/2 imag parts.
+
+    Args:
+      images(float): A tensor of shape (batch_size, N, N, ch)
+
+    Returns:
+      spectra(float): An FFT-ed tensor of shape (batch_size, N, N, ch)
+
+    """
+    n = images.shape[1]
+    reim_imgs = join_reim_channels(images)
+    perm_imgs = layers.Permute((3, 1, 2))(reim_imgs)
+    perm_ffts = layers.Permute((2, 3, 1))(tf.signal.fft2d(perm_imgs))
+    spectra = tf.signal.fftshift(split_reim_channels(perm_ffts), axes=(1,2))
     return spectra
 
 
@@ -144,7 +165,7 @@ def convert_to_image_domain(spectra):
 
     """
     n = spectra.shape[1]
-    images = split_reim(np.fft.ifft2(join_reim(spectra), axes=(1, 2)))
+    images = split_reim(np.fft.ifft2(join_reim(np.fft.fftshift(spectra, axes=(1,2))), axes=(1, 2)))
     return images
 
 
@@ -159,5 +180,25 @@ def convert_tensor_to_image_domain(spectra):
 
     """
     n = spectra.shape[1]
-    images = split_reim_tensor(tf.signal.ifft2d(join_reim_tensor(spectra)))
+    images = split_reim_tensor(tf.signal.ifft2d(join_reim_tensor(tf.signal.fftshift(spectra, axes=(1,2)))))
+    return images
+
+
+def convert_channels_to_image_domain(spectra):
+    """Convert a tensor of Fourier spectra to the corresponding images.
+
+    The tensor contains ch channels representing ch/2 real parts and ch/2 imag parts.
+
+    Args:
+      spectra(float): An array of shape (batch_size, N, N, ch)
+
+    Returns:
+      images(float): An IFFT-ed array of shape (batch_size, N, N, ch)
+
+    """
+    n = spectra.shape[1]
+    reim_spectra = join_reim_channels(tf.signal.fftshift(spectra, axes=(1,2)))
+    perm_spectra = layers.Permute((3, 1, 2))(reim_spectra)
+    perm_images = layers.Permute((2, 3, 1))(tf.signal.ifft2d(perm_spectra))
+    images = split_reim_channels(perm_images)
     return images

@@ -362,7 +362,7 @@ def generate_undersampled_motion_data(
             mask = np.zeros(arr_shape)
             mask[:, mask_inds] = 1
 
-            return np.fft.ifftshift(mask).T
+            return mask.T
 
         else:
             return(np.ones(arr_shape)).T

@@ -65,7 +65,7 @@ def get_fastmri_slices_from_dir(
                 y_mid = int(sl_img_unshift.shape[1] / 2)
                 sl_img_crop = sl_img_unshift[x_mid -
                                              n:x_mid + n, y_mid - n:y_mid + n]
-                sl_k = np.fft.fft2(sl_img_crop)
+                sl_k = np.fft.fftshift(np.fft.fft2(sl_img_crop))
 
                 slices.append(sl_img)
                 kspace.append(sl_k)

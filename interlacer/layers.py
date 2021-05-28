@@ -120,14 +120,8 @@ class Interlacer(Layer):
         """
         img_in, freq_in = x
 
-        img_in_permuted = Permute((3, 1, 2))(utils.join_reim_channels(img_in))
-        img_in_as_freq = utils.split_reim_channels(
-            Permute((2, 3, 1))(tf.signal.fft2d(img_in_permuted)))
-
-        freq_in_permuted = Permute((3, 1, 2))(
-            utils.join_reim_channels(freq_in))
-        freq_in_as_img = utils.split_reim_channels(
-            Permute((2, 3, 1))(tf.signal.ifft2d(freq_in_permuted)))
+        img_in_as_freq = utils.convert_channels_to_frequency_domain(img_in)
+        freq_in_as_img = utils.convert_channels_to_image_domain(freq_in)
 
         mixed_ilayer_input = self.img_mix([img_in, freq_in_as_img])
         mixed_flayer_input = self.freq_mix([freq_in, img_in_as_freq])
