@@ -6,7 +6,7 @@ Joint frequency- and image- space learning for Fourier imaging tasks.
 keywords: image reconstruction, motion correction, denoising, magnetic resonance imaging, deep learning
 
 ## Dependencies
-All dependencies required to run this code are specified in `requirements.txt`. To create an anaconda environment with those dependencies installed, run `conda create --name <env> --file requirements.txt`. You will also need to add this repo to your python path (if you're using conda, `conda-develop /path/to/interlacer/`).
+All dependencies required to run this code are specified in `environment.yml`. To create an anaconda environment with those dependencies installed, run `conda env create --name <env> --file environment.yml`. You will also need to add this repo to your python path (if you're using conda, `conda-develop /path/to/interlacer/`).
 
 ## Layer Implementation
 If you'd like to incorporate our joint learning strategy into your own networks, we provide a standalone Keras Layer in `interlacer/layers.py`. This layer currently supports only 2D inputs.
