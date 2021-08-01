@@ -14,7 +14,8 @@ def get_conv_no_residual_model(
         kernel_size,
         num_features,
         num_layers,
-        enforce_dc):
+        enforce_dc,
+	complex_conv):
     """Generic conv model without residual convolutions.
 
     Args:
@@ -34,7 +35,7 @@ def get_conv_no_residual_model(
 
     prev_layer = inputs
     for i in range(num_layers):
-        conv = layers.BatchNormConv(num_features, kernel_size)(prev_layer)
+        conv = layers.BatchNormConv(num_features, kernel_size, complex_conv)(prev_layer)
         nonlinear = layers.get_nonlinear_layer(nonlinearity)(conv)
         prev_layer = nonlinear
     output = Conv2D(2, kernel_size, activation=None, padding='same',
@@ -54,7 +55,8 @@ def get_conv_residual_model(
         kernel_size,
         num_features,
         num_layers,
-        enforce_dc):
+        enforce_dc,
+	complex_conv):
     """Generic conv model with residual convolutions.
 
     Args:
@@ -74,7 +76,7 @@ def get_conv_residual_model(
 
     prev_layer = inputs
     for i in range(num_layers):
-        conv = layers.BatchNormConv(num_features, kernel_size)(prev_layer)
+        conv = layers.BatchNormConv(num_features, kernel_size, complex_conv)(prev_layer)
         nonlinear = layers.get_nonlinear_layer(nonlinearity)(conv)
         prev_layer = nonlinear + \
             tf.tile(inputs, [1, 1, 1, int(num_features / 2)])
@@ -95,7 +97,8 @@ def get_interlacer_residual_model(
         kernel_size,
         num_features,
         num_layers,
-        enforce_dc):
+        enforce_dc,
+        complex_conv):
     """Interlacer model with residual convolutions.
 
     Returns a model that takes a frequency-space input (of shape (batch_size, n, n, 2)) and returns a frequency-space output of the same size, comprised of interlacer layers and with connections from the input to each layer.
@@ -136,7 +139,7 @@ def get_interlacer_residual_model(
 
     for i in range(num_layers):
         img_conv, k_conv = layers.Interlacer(
-            num_features, kernel_size)([img_in, freq_in])
+            num_features, kernel_size, complex_conv)([img_in, freq_in])
 
         freq_in = k_conv + inp_copy
         img_in = img_conv + inp_img_copy
@@ -158,7 +161,8 @@ def get_alternating_residual_model(
         kernel_size,
         num_features,
         num_layers,
-        enforce_dc):
+        enforce_dc,
+        complex_conv):
     """Alternating model with residual convolutions.
 
     Returns a model that takes a frequency-space input (of shape (batch_size, n, n, 2)) and returns a frequency-space output of the same size, comprised of alternating frequency- and image-space convolutional layers and with connections from the input to each layer.
@@ -198,13 +202,13 @@ def get_alternating_residual_model(
 
     for i in range(num_layers):
         k_conv = layers.BatchNormConv(
-            num_features, kernel_size)(prev_layer) + inp_copy
+            num_features, kernel_size, complex_conv)(prev_layer) + inp_copy
         nonlinear = layers.get_nonlinear_layer('3-piece')(k_conv)
 
         img = utils.convert_channels_to_image_domain(nonlinear)
 
         img_conv = layers.BatchNormConv(
-            num_features, kernel_size)(img) + inp_img_copy
+            num_features, kernel_size, complex_conv)(img) + inp_img_copy
         nonlinear = layers.get_nonlinear_layer('relu')(img_conv)
 
         prev_layer = utils.convert_channels_to_frequency_domain(nonlinear)

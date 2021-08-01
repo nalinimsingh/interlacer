@@ -17,11 +17,11 @@ import numpy as np
 
 import filepaths
 
-exp_name = 'cross_model_comparison'
+exp_name = 'name'
 
 # Customizable fields
 datasets = ['MRI']
-tasks = ['undersample_motion']
+tasks = ['undersample']
 us_fracs = ['0.75']
 mot_fracs = ['0.03']
 max_htranses = ['0.03']
@@ -29,27 +29,26 @@ max_vtranses = ['0.03']
 max_rots = ['0.03']
 noise_stds = ['None']
 
-architectures = [
-    'CONV_RESIDUAL',
-    'INTERLACER_RESIDUAL',
-    'ALTERNATING_RESIDUAL']
+architectures = ['INTERLACER_RESIDUAL',
+    'ALTERNATING_RESIDUAL', 'CONV_RESIDUAL']
 kernel_sizes = ['9']
-num_featureses = ['32']
+num_featureses = ['64']
 num_layerses = ['10','20']
 loss_types = ['compimage']
 losses = ['L1']
 loss_lambdas = ['0.1']
-input_domains = ['IMAGE', 'FREQ']
-output_domains = ['IMAGE', 'FREQ']
+input_domains = ['FREQ', 'IMAGE']
+output_domains = ['FREQ', 'IMAGE']
 nonlinearities = ['relu', '3-piece']
 enforce_dcs = ['True', 'False']
+complex_conv = ['True', 'False']
 
 num_epochses = ['5000']
 batch_sizes = ['4']
 
 
-for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std, architecture, kernel_size, num_features, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, enforce_dc, num_epochs, batch_size in itertools.product(
-        datasets, tasks, us_fracs, mot_fracs, max_htranses, max_vtranses, max_rots, noise_stds, architectures, kernel_sizes, num_featureses, num_layerses, loss_types, losses, loss_lambdas, input_domains, output_domains, nonlinearities, enforce_dcs, num_epochses, batch_sizes):
+for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std, architecture, kernel_size, num_features, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, enforce_dc, complex_conv, num_epochs, batch_size in itertools.product(
+        datasets, tasks, us_fracs, mot_fracs, max_htranses, max_vtranses, max_rots, noise_stds, architectures, kernel_sizes, num_featureses, num_layerses, loss_types, losses, loss_lambdas, input_domains, output_domains, nonlinearities, enforce_dcs, complex_conv, num_epochses, batch_sizes):
     base_dir = os.path.join(filepaths.CONFIG_DIR, exp_name)
     ini_filename = dataset
     for name in [
@@ -71,6 +70,7 @@ for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std
             output_domain,
             nonlinearity,
             enforce_dc,
+            complex_conv,
             num_epochs,
             batch_size]:
         ini_filename += '-' + name
@@ -115,6 +115,7 @@ for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std
         f.write('output_domain = ' + output_domain + '\n')
         f.write('nonlinearity = ' + nonlinearity + '\n')
         f.write('enforce_dc = ' + enforce_dc + '\n')
+        f.write('complex_conv = ' + complex_conv + '\n')
 
         f.write('\n')
 

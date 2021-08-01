@@ -127,8 +127,10 @@ if(exp_config.architecture == 'CONV'):
         exp_config.kernel_size,
         exp_config.num_features,
         exp_config.num_layers,
-        exp_config.enforce_dc)
+        exp_config.enforce_dc,
+        exp_config.complex_conv)
 elif(exp_config.architecture == 'CONV_RESIDUAL'):
+    print('CONV has complex_conv value: ' + str(exp_config.complex_conv))
     model = models.get_conv_residual_model(
         (n,
          n,
@@ -137,7 +139,8 @@ elif(exp_config.architecture == 'CONV_RESIDUAL'):
         exp_config.kernel_size,
         exp_config.num_features,
         exp_config.num_layers,
-        exp_config.enforce_dc)
+        exp_config.enforce_dc,
+        exp_config.complex_conv)
 elif(exp_config.architecture == 'INTERLACER_RESIDUAL'):
     model = models.get_interlacer_residual_model(
         (n,
@@ -147,7 +150,8 @@ elif(exp_config.architecture == 'INTERLACER_RESIDUAL'):
         exp_config.kernel_size,
         exp_config.num_features,
         exp_config.num_layers,
-        exp_config.enforce_dc)
+        exp_config.enforce_dc,
+        exp_config.complex_conv)
 elif(exp_config.architecture == 'ALTERNATING_RESIDUAL'):
     model = models.get_alternating_residual_model(
         (n,
@@ -157,7 +161,8 @@ elif(exp_config.architecture == 'ALTERNATING_RESIDUAL'):
         exp_config.kernel_size,
         exp_config.num_features,
         exp_config.num_layers,
-        exp_config.enforce_dc)
+        exp_config.enforce_dc,
+        exp_config.complex_conv)
 print('Loaded model')
 
 # Checkpointing

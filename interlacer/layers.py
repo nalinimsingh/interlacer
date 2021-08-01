@@ -27,19 +27,35 @@ def get_nonlinear_layer(nonlinearity):
 class BatchNormConv(Layer):
     """Custom layer that combines BN and a convolution."""
 
-    def __init__(self, features, kernel_size, **kwargs):
+    def __init__(self, features, kernel_size, complex_conv, **kwargs):
         self.features = features
         self.kernel_size = kernel_size
+        self.complex_conv = complex_conv
         super(BatchNormConv, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.bn = BatchNormalization()
-        self.conv = Conv2D(
+        self.full_conv = Conv2D(
             self.features,
             self.kernel_size,
             activation=None,
             padding='same',
             kernel_initializer='he_normal')
+
+        self.real_conv = Conv2D(
+            int(self.features//2),
+            self.kernel_size,
+            activation=None,
+            padding='same',
+            kernel_initializer='he_normal')
+
+        self.imaginary_conv = Conv2D(
+            self.features//2,
+            self.kernel_size,
+            activation=None,
+            padding='same',
+            kernel_initializer='he_normal')
+
         super(BatchNormConv, self).build(input_shape)
 
     def call(self, x):
@@ -53,7 +69,24 @@ class BatchNormConv(Layer):
 
         """
         bn = self.bn(x)
-        conv = self.conv(bn)
+
+        if(self.complex_conv):
+            num_channels = bn.shape[-1]
+            real_half = bn[:,:,:,0:num_channels//2]
+            imaginary_half = bn[:,:,:,num_channels//2:]
+
+            IRxKR = self.real_conv(real_half)
+            IIxKI = self.imaginary_conv(imaginary_half)
+            IRxKI = self.imaginary_conv(real_half)
+            IIxKR = self.real_conv(imaginary_half)
+
+            real_FM = tf.subtract(IRxKR,IIxKI)
+            imaginary_FM = tf.add(IRxKI,IIxKR)
+
+            conv = tf.concat([real_FM, imaginary_FM], axis=3)
+
+        else:
+            conv = self.full_conv(bn)
 
         return conv
 
@@ -95,16 +128,17 @@ class Mix(Layer):
 class Interlacer(Layer):
     """Custom layer to learn features in both image and frequency space."""
 
-    def __init__(self, features, kernel_size, **kwargs):
+    def __init__(self, features, kernel_size, complex_conv, **kwargs):
         self.features = features
         self.kernel_size = kernel_size
+        self.complex_conv = complex_conv
         super(Interlacer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.img_mix = Mix()
         self.freq_mix = Mix()
-        self.img_bnconv = BatchNormConv(self.features, self.kernel_size)
-        self.freq_bnconv = BatchNormConv(self.features, self.kernel_size)
+        self.img_bnconv = BatchNormConv(self.features, self.kernel_size, self.complex_conv)
+        self.freq_bnconv = BatchNormConv(self.features, self.kernel_size, self.complex_conv)
         super(Interlacer, self).build(input_shape)
 
     def call(self, x):
