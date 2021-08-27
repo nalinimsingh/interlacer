@@ -1,7 +1,7 @@
 import configparser
 
 
-def read_or_default(config, section, option, field_type):
+def read_or_default(config, section, option, field_type, default=None):
     """Reads and returns a config field.
 
     Args:
@@ -25,7 +25,7 @@ def read_or_default(config, section, option, field_type):
         elif(field_type == 'bool'):
             return config.getboolean(section, option)
     except BaseException:
-        return None
+        return default
 
 
 class TrainingConfig:
@@ -39,6 +39,7 @@ class TrainingConfig:
         architecture: Model architecture ('CONV','CONV_RESIDUAL',or 'INTERLACER_RESIDUAL')
         kernel_size(int): Size of kernel in intermediate layers
         num_features(int): Number of features in intermediate layers
+        num_convs(int): Number of convolutions per Interlacer layer
         num_layers(int): Number of layers in model
         loss_type(str): Domain in which to compute loss ('IMAGE' or 'FREQ')
         loss(str): Loss function ('L1' or 'L2')
@@ -81,6 +82,8 @@ class TrainingConfig:
             config, 'MODEL', 'kernel_size', 'int')
         self.num_features = read_or_default(
             config, 'MODEL', 'num_features', 'int')
+        self.num_convs = read_or_default(
+            config, 'MODEL', 'num_convs', 'int', 1)
         self.num_layers = read_or_default(
             config, 'MODEL', 'num_layers', 'int')
         self.loss_type = read_or_default(
@@ -117,6 +120,7 @@ class TrainingConfig:
                 self.architecture,
                 self.kernel_size,
                 self.num_features,
+                self.num_convs,
                 self.num_layers,
                 self.loss_type,
                 self.loss,

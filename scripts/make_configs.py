@@ -35,6 +35,7 @@ architectures = [
     'ALTERNATING_RESIDUAL']
 kernel_sizes = ['9']
 num_featureses = ['32']
+num_convses = ['1']
 num_layerses = ['10','20']
 loss_types = ['compimage']
 losses = ['L1']
@@ -48,8 +49,8 @@ num_epochses = ['5000']
 batch_sizes = ['4']
 
 
-for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std, architecture, kernel_size, num_features, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, enforce_dc, num_epochs, batch_size in itertools.product(
-        datasets, tasks, us_fracs, mot_fracs, max_htranses, max_vtranses, max_rots, noise_stds, architectures, kernel_sizes, num_featureses, num_layerses, loss_types, losses, loss_lambdas, input_domains, output_domains, nonlinearities, enforce_dcs, num_epochses, batch_sizes):
+for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std, architecture, kernel_size, num_features, num_convs, num_layers, loss_type, loss, loss_lambda, input_domain, output_domain, nonlinearity, enforce_dc, num_epochs, batch_size in itertools.product(
+        datasets, tasks, us_fracs, mot_fracs, max_htranses, max_vtranses, max_rots, noise_stds, architectures, kernel_sizes, num_featureses, num_convses, num_layerses, loss_types, losses, loss_lambdas, input_domains, output_domains, nonlinearities, enforce_dcs, num_epochses, batch_sizes):
     base_dir = os.path.join(filepaths.CONFIG_DIR, exp_name)
     ini_filename = dataset
     for name in [
@@ -63,6 +64,7 @@ for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std
             architecture,
             kernel_size,
             num_features,
+            num_convs,
             num_layers,
             loss_type,
             loss,
@@ -107,6 +109,7 @@ for dataset, task, us_frac, mot_frac, max_htrans, max_vtrans, max_rot, noise_std
         f.write('architecture = ' + architecture + '\n')
         f.write('kernel_size = ' + kernel_size + '\n')
         f.write('num_features = ' + num_features + '\n')
+        f.write('num_convs = ' + num_convs + '\n')
         f.write('num_layers = ' + num_layers + '\n')
         f.write('loss_type = ' + loss_type + '\n')
         f.write('loss = ' + loss + '\n')

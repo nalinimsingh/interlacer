@@ -94,6 +94,7 @@ def get_interlacer_residual_model(
         nonlinearity,
         kernel_size,
         num_features,
+        num_convs,
         num_layers,
         enforce_dc):
     """Interlacer model with residual convolutions.
@@ -136,7 +137,7 @@ def get_interlacer_residual_model(
 
     for i in range(num_layers):
         img_conv, k_conv = layers.Interlacer(
-            num_features, kernel_size)([img_in, freq_in])
+            num_features, kernel_size, num_convs)([img_in, freq_in])
 
         freq_in = k_conv + inp_copy
         img_in = img_conv + inp_img_copy

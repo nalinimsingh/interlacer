@@ -146,6 +146,7 @@ elif(exp_config.architecture == 'INTERLACER_RESIDUAL'):
         exp_config.nonlinearity,
         exp_config.kernel_size,
         exp_config.num_features,
+        exp_config.num_convs,
         exp_config.num_layers,
         exp_config.enforce_dc)
 elif(exp_config.architecture == 'ALTERNATING_RESIDUAL'):
