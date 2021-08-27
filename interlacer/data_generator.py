@@ -125,9 +125,21 @@ def generate_undersampled_data(
         n = images.shape[1]
         batch_inds = np.random.randint(0, images.shape[0], batch_size)
 
-        inputs = np.empty((0, n, n, 2))
-        outputs = np.empty((0, n, n, 2))
-        masks = np.empty((0, n, n, 2))
+        if(input_domain=='MAG' or ('COMPLEX' in input_domain) ):
+            n_ch_in = 1
+        else:
+            n_ch_in = 2
+
+        if(output_domain=='MAG' or ('COMPLEX' in output_domain) ):
+            n_ch_out = 1
+        else:
+            n_ch_out = 2
+        inputs = np.empty((0, n, n, n_ch_in))
+        outputs = np.empty((0, n, n, n_ch_out))
+        masks = np.empty((0, n, n, n_ch_in))
+
+        if('COMPLEX' in input_domain):
+            masks = np.empty((0, n, n))
 
         for j in batch_inds:
             true_img = np.expand_dims(images[j, :, :, :], 0)
@@ -152,11 +164,33 @@ def generate_undersampled_data(
                 masks = np.append(masks, mask, axis=0)
             elif(input_domain == 'IMAGE'):
                 inputs = np.append(inputs, corrupt_img / nf, axis=0)
+            elif(input_domain == 'MAG'):
+                corrupt_img = np.expand_dims(np.abs(utils.join_reim(corrupt_img)),-1)
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
+            elif(input_domain == 'COMPLEX_K'):
+                corrupt_k = np.expand_dims(utils.join_reim(corrupt_k),-1)
+                inputs = np.append(inputs, corrupt_k / nf, axis=0)
+            elif(input_domain == 'COMPLEX_I'):
+                corrupt_img = np.expand_dims(utils.join_reim(corrupt_img),-1)
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
 
             if(output_domain == 'FREQ'):
                 outputs = np.append(outputs, true_k / nf, axis=0)
             elif(output_domain == 'IMAGE'):
                 outputs = np.append(outputs, true_img / nf, axis=0)
+            elif(output_domain == 'MAG'):
+                true_img = np.expand_dims(np.abs(utils.join_reim(true_img)),-1)
+                outputs = np.append(outputs, true_img / nf, axis=0)
+            elif(output_domain == 'COMPLEX_K'):
+                true_k = np.expand_dims(utils.join_reim(true_k),-1)
+                outputs = np.append(inputs, true_k / nf, axis=0)
+            elif(output_domain == 'COMPLEX_I'):
+                true_img = np.expand_dims(utils.join_reim(true_img),-1)
+                outputs = np.append(inputs, true_img / nf, axis=0)
+
+            if('COMPLEX' in input_domain):
+                mask = mask [:,:,:,0]
+                masks = np.append(masks, mask, axis=0)
 
         if(enforce_dc):
             yield((inputs, masks), outputs)
