@@ -476,8 +476,7 @@ def generate_data(
             exp_config.max_htrans,
             exp_config.max_vtrans,
             exp_config.max_rot,
-            batch_size,
-            split=split)
+            batch_size)
     elif(task == 'noise'):
         return generate_noisy_data(
             images,
