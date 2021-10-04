@@ -78,7 +78,7 @@ def get_best_ckpt(model_path):
             event_accumulator.SCALARS: 0}, purge_orphaned_data=False)
     x.Reload()
 
-    img_l1 = pd.DataFrame(x.Scalars('epoch_loss')).value[100::100]
+    img_l1 = pd.DataFrame(x.Scalars('epoch_loss')).value[10::10]
         
-    best_epoch = 100 * (np.argmin(img_l1) + 1) # epochs stored in intervals of 100
+    best_epoch = 10 * (np.argmin(img_l1) + 1) # epochs stored in intervals of 10
     return best_epoch

@@ -186,7 +186,7 @@ checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 cp_callback = keras.callbacks.ModelCheckpoint(
-    checkpoint_path, verbose=1, save_weights_only=True, period=100)
+    checkpoint_path, verbose=1, save_weights_only=True, period=10)
 print('Set up checkpointing')
 
 if(debug):
