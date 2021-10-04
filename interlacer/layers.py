@@ -95,10 +95,11 @@ class Mix(Layer):
 class Interlacer(Layer):
     """Custom layer to learn features in both image and frequency space."""
 
-    def __init__(self, features, kernel_size, num_convs=1, **kwargs):
+    def __init__(self, features, kernel_size, num_convs=1, shift=False, **kwargs):
         self.features = features
         self.kernel_size = kernel_size
         self.num_convs = num_convs
+        self.shift = shift
         super(Interlacer, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -128,8 +129,12 @@ class Interlacer(Layer):
         k_feat = self.freq_mix([freq_in, img_in_as_freq])
 
         for i in range(self.num_convs):
+            if(self.shift):
+                img_feat = tf.signal.ifftshift(img_feat, axes=(1,2))
             img_conv = self.img_bnconvs[i](img_feat)
             img_feat = get_nonlinear_layer('relu')(img_conv)
+            if(self.shift):
+                img_feat = tf.signal.fftshift(img_feat, axes=(1,2))
 
             k_conv = self.freq_bnconvs[i](k_feat)
             k_feat = get_nonlinear_layer('3-piece')(k_conv)

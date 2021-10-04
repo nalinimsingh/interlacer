@@ -89,15 +89,13 @@ if('FASTMRI' in exp_config.dataset):
     train_generator = fastmri_data_generator.generate_data(
         fm_train_dir,
         exp_config,
-        fs=('FS' in exp_config.dataset),
-        batch_size=exp_config.batch_size)
+        fs=('FS' in exp_config.dataset))
     print('Generated training generator')
 
     val_generator = fastmri_data_generator.generate_data(
         fm_val_dir,
         exp_config,
-        fs=('FS' in exp_config.dataset),
-        batch_size=exp_config.batch_size)
+        fs=('FS' in exp_config.dataset))
     print('Generated validation generator')
 else:
     train_generator = data_generator.generate_data(
@@ -114,7 +112,7 @@ else:
 
 # Pick architecture
 if('FASTMRI' in exp_config.dataset):
-    n = 320
+    n = None
 else:
     n = img_train.shape[1]
 
@@ -139,16 +137,28 @@ elif(exp_config.architecture == 'CONV_RESIDUAL'):
         exp_config.num_layers,
         exp_config.enforce_dc)
 elif(exp_config.architecture == 'INTERLACER_RESIDUAL'):
-    model = models.get_interlacer_residual_model(
-        (n,
-         n,
-         2),
-        exp_config.nonlinearity,
-        exp_config.kernel_size,
-        exp_config.num_features,
-        exp_config.num_convs,
-        exp_config.num_layers,
-        exp_config.enforce_dc)
+    if('FASTMRI' in exp_config.dataset):
+        model = models.get_fastmri_interlacer_residual_model(
+            (None,
+             None,
+             2),
+            exp_config.nonlinearity,
+            exp_config.kernel_size,
+            exp_config.num_features,
+            exp_config.num_convs,
+            exp_config.num_layers,
+            exp_config.enforce_dc)
+    else:
+        model = models.get_interlacer_residual_model(
+            (n,
+             n,
+             2),
+            exp_config.nonlinearity,
+            exp_config.kernel_size,
+            exp_config.num_features,
+            exp_config.num_convs,
+            exp_config.num_layers,
+            exp_config.enforce_dc)
 elif(exp_config.architecture == 'ALTERNATING_RESIDUAL'):
     model = models.get_alternating_residual_model(
         (n,
@@ -239,6 +249,9 @@ elif(exp_config.loss_type == 'psnr'):
     used_loss = losses.psnr(exp_config.output_domain)
 else:
     raise ValueError('Unrecognized loss type.')
+
+if('FASTMRI' in exp_config.dataset):
+    used_loss = {'output':None, 'output_crop':used_loss}
 
 # Setup model
 fourier_l1 = losses.fourier_loss(exp_config.output_domain, 'L1')

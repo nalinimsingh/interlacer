@@ -42,8 +42,11 @@ def plot_k_diff(k1,k2,i, ax=None):
         plt.xticks([])
         plt.yticks([])
     
-def plot_img_from_k(k,i,vmin=None,vmax=None, ax=None):
-    plot_img(utils.convert_to_image_domain(k),i,vmin=vmin,vmax=vmax, ax=ax)
+def plot_img_from_k(k,i,vmin=None,vmax=None, ax=None, fftshift=False):
+    to_plot = utils.convert_to_image_domain(k)
+    if(fftshift):
+        to_plot = np.fft.fftshift(to_plot, axes=(1,2))
+    plot_img(to_plot,i,vmin=vmin,vmax=vmax, ax=ax)
     
 def plot_k_from_img(img,i,vmin=None,vmax=None, ax=None):
     plot_k(utils.convert_to_frequency_domain(img),i,vmin=vmin,vmax=vmax, ax=ax)

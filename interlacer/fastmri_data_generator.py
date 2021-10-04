@@ -9,9 +9,10 @@ from skimage.transform import resize
 from tensorflow import keras
 from tensorflow.keras.datasets import mnist
 
-from interlacer import motion, utils
+from interlacer import models, utils
 from scripts import filepaths
 
+n_crop = 320
 
 def get_fastmri_slices_from_dir(
         image_dir,
@@ -31,14 +32,9 @@ def get_fastmri_slices_from_dir(
 
     """
     image_names = os.listdir(image_dir)
-    slices = []
-    kspace = []
-    masks = []
 
-    batch_inds = np.random.randint(0, len(image_names), batch_size)
-
-    i = 0
-    while(i < batch_size):
+    found_vol = False
+    while not found_vol:
         img_i = np.random.randint(0, len(image_names))
         img = image_names[img_i]
 
@@ -46,36 +42,38 @@ def get_fastmri_slices_from_dir(
             if (('CORPDFS' in f.attrs['acquisition']) == fs):
                 n_slices = f['kspace'].shape[0]
 
-                slice_i = np.random.randint(0, n_slices)
+                kspace_fulls = np.empty((batch_size,
+                                         f['kspace'].shape[1],
+                                         f['kspace'].shape[2]),
+                                         dtype=complex)
+                masks = np.empty((batch_size,
+                                  f['kspace'].shape[1],
+                                  f['kspace'].shape[2]))
+                kspace_masks = kspace_fulls.copy()
+                kspace_full_crops = np.empty((batch_size,n_crop,
+                                              n_crop),dtype=complex)
 
-                sl_img = f['reconstruction_esc'][slice_i, :, :]
-                n = int(sl_img.shape[0] / 2)
+                for i in range(batch_size):
+                    slice_i = np.random.randint(0, n_slices)
 
-                sl_k = f['kspace'][slice_i, :, :]
+                    kspace_full = f['kspace'][slice_i, :, :]
 
-                mask = get_undersampling_mask(
-                    sl_k.shape, corruption_frac)
+                    mask = get_undersampling_mask(
+                        kspace_full.shape, corruption_frac)
 
-                sl_k *= mask
+                    kspace_mask = mask*f['kspace'][slice_i, :, :]
+                    kspace_full_crop = models.crop_320(
+                            utils.split_reim(np.expand_dims(kspace_full,0))[0,:,:,:])
+                    kspace_full_crop = utils.join_reim(np.expand_dims(kspace_full_crop,0))[0,:,:]
 
-                # Bring k-space down to square size
-                sl_k = np.fft.ifftshift(sl_k)
-                sl_img_unshift = np.fft.fftshift(np.fft.ifft2(sl_k))
-                x_mid = int(sl_img_unshift.shape[0] / 2)
-                y_mid = int(sl_img_unshift.shape[1] / 2)
-                sl_img_crop = sl_img_unshift[x_mid -
-                                             n:x_mid + n, y_mid - n:y_mid + n]
-                sl_k = np.fft.fftshift(np.fft.fft2(sl_img_crop))
+                    kspace_fulls[i,...] = kspace_full
+                    kspace_full_crops[i,...] = kspace_full_crop
+                    kspace_masks[i,...] = kspace_mask
+                    masks[i,...] = mask
 
-                slices.append(sl_img)
-                kspace.append(sl_k)
-                i += 1
-            else:
-                pass
-    slices = np.asarray(slices)
-    kspace = np.asarray(kspace)
+                found_vol = True
 
-    return slices, kspace
+    return kspace_fulls, kspace_full_crops, kspace_masks, masks
 
 
 def get_undersampling_mask(arr_shape, us_frac):
@@ -109,8 +107,8 @@ def generate_undersampled_data(
         output_domain,
         corruption_frac,
         enforce_dc,
-        fs=False,
-        batch_size=16):
+        batch_size,
+        fs=False):
     """Generator that yields batches of undersampled input and correct output data.
 
     For corrupted inputs, select each line in k-space with probability corruption_frac and set it to zero.
@@ -129,48 +127,45 @@ def generate_undersampled_data(
     """
 
     while True:
-        images, kspace = get_fastmri_slices_from_dir(
+        kspace_full, kspace_full_crop, kspace_mask, mask = get_fastmri_slices_from_dir(
             image_dir, batch_size, fs, corruption_frac=corruption_frac)
 
-        images = utils.split_reim(images)
-        spectra = utils.convert_to_frequency_domain(images)
+        mask = np.expand_dims(mask,-1)
+        mask = np.repeat(mask,2,axis=-1)
 
-        n = images.shape[1]
+        kspace_full = utils.split_reim(kspace_full)
+        kspace_full_crop = utils.split_reim(kspace_full_crop)
+        kspace_mask = utils.split_reim(kspace_mask)
 
-        inputs = np.empty((0, n, n, 2))
-        outputs = np.empty((0, n, n, 2))
+        # Bring majority of values to 0-1 range.
+        corrupt_img = utils.convert_to_image_domain(kspace_mask)
+        nf = np.percentile(np.abs(corrupt_img), 95, axis=(1,2,3))
+        nf = nf[:,np.newaxis, np.newaxis, np.newaxis]
 
-        for j in range(batch_size):
-            corrupt_k = kspace[j, :, :]
+        if(input_domain == 'FREQ'):
+            inp = kspace_mask / nf
+        elif(input_domain == 'IMAGE'):
+            inp = utils.convert_to_image_domain(kspace_mask) / nf
 
-            true_img = np.expand_dims(images[j, :, :, :], 0)
-            true_k = np.expand_dims(spectra[j, :, :, :], 0)
+        if(output_domain == 'FREQ'):
+            output = kspace_full / nf
+            output_crop = kspace_full_crop / nf
+        elif(output_domain == 'IMAGE'):
+            output = utils.convert_to_image_domain(kspace_mask) / nf
+            output_crop = utils.convert_to_image_domain(kspace_full_crop) / nf
 
-            # Bring majority of values to 0-1 range.
-            corrupt_k = utils.split_reim(np.expand_dims(corrupt_k, 0)) * 500
-
-            corrupt_img = utils.convert_to_image_domain(corrupt_k)
-
-            nf = np.percentile(np.abs(corrupt_img), 95)
-
-            if(input_domain == 'FREQ'):
-                inputs = np.append(inputs, corrupt_k / nf, axis=0)
-            elif(input_domain == 'IMAGE'):
-                inputs = np.append(inputs, corrupt_img / nf, axis=0)
-
-            if(output_domain == 'FREQ'):
-                outputs = np.append(outputs, true_k / nf, axis=0)
-            elif(output_domain == 'IMAGE'):
-                outputs = np.append(outputs, true_img / nf, axis=0)
-
-        yield(inputs, outputs)
+        if(enforce_dc):
+            yield({'input':inp, 'mask':mask},
+                  {'output':output, 'output_crop':output_crop})
+        else:
+            yield(inp, {'output':output, 'output_crop':output_crop})
 
 
 def generate_data(
         image_dir,
         exp_config,
-        fs=False,
-        batch_size=16):
+        batch_size=4,
+        fs=False):
     """Return a generator with corrupted and corrected data.
 
     Args:
@@ -200,5 +195,5 @@ def generate_data(
             output_domain,
             us_frac,
             enforce_dc,
-            fs=fs,
-            batch_size=batch_size)
+            batch_size,
+            fs=fs)
