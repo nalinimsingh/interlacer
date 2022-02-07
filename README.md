@@ -25,7 +25,10 @@ We provide a helper script to generate config files for experiments comparing mu
 
 For SLURM users, running `python scripts/run_experiment.py ../configs/$experiment_name$` starts training (by running `train.py`) for each configuration file within the directory.
 
-## Paper 
+## Pretrained Models
+Pretrained models are available in the `pretrained models` directory. This directory also includes a jupyter notebook which shows how to load and run inference using the models.
+
+## Paper
 If you use the ideas or implementation in this repository, please cite our [paper](https://arxiv.org/abs/2007.01441):
 
     @misc{singh2020joint,
@@ -35,4 +38,4 @@ If you use the ideas or implementation in this repository, please cite our [pape
         eprint={2007.01441},
         archivePrefix={arXiv},
         primaryClass={cs.CV}
-    }       
+    }
