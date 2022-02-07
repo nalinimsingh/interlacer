@@ -198,6 +198,119 @@ def generate_undersampled_data(
             yield(inputs, outputs)
 
 
+def generate_uniform_undersampled_data(
+        images,
+        input_domain,
+        output_domain,
+        corruption_frac,
+        enforce_dc,
+        batch_size=10):
+    """Generator that yields batches of undersampled input and correct output data.
+
+    For corrupted inputs, select each line in k-space with probability corruption_frac and set it to zero.
+
+    Args:
+      images(float): Numpy array of input images, of shape (num_images, n, n)
+      input_domain(str): The domain of the network input; 'FREQ' or 'IMAGE'
+      output_domain(str): The domain of the network output; 'FREQ' or 'IMAGE'
+      corruption_frac(float): Probability with which to zero a line in k-space
+      batch_size(int, optional): Number of input-output pairs in each batch (Default value = 10)
+
+    Returns:
+      inputs: Tuple of corrupted input data and ground truth output data, both numpy arrays of shape (batch_size,n,n,2).
+
+    """
+    num_batches = np.ceil(len(images) / batch_size)
+    img_shape = images.shape[1]
+
+    images = utils.split_reim(images)
+    spectra = utils.convert_to_frequency_domain(images)
+
+    while True:
+        n = images.shape[1]
+        batch_inds = np.random.randint(0, images.shape[0], batch_size)
+
+        if(input_domain=='MAG' or ('COMPLEX' in input_domain) ):
+            n_ch_in = 1
+        else:
+            n_ch_in = 2
+
+        if(output_domain=='MAG' or ('COMPLEX' in output_domain) ):
+            n_ch_out = 1
+        else:
+            n_ch_out = 2
+        inputs = np.empty((0, n, n, n_ch_in))
+        outputs = np.empty((0, n, n, n_ch_out))
+        masks = np.empty((0, n, n, n_ch_in))
+
+        if('COMPLEX' in input_domain):
+            masks = np.empty((0, n, n))
+
+        for j in batch_inds:
+            true_img = np.expand_dims(images[j, :, :, :], 0)
+            true_k = np.expand_dims(spectra[j, :, :, :], 0)
+            mask = np.ones(true_k.shape)
+
+            img_size = images.shape[1]
+            num_points = int(img_size * corruption_frac)
+
+            s = int(1/(1-corruption_frac))
+            arc_lines = int(32/s)
+
+            arc_low = int((50-int(arc_lines/2))*n/100)
+            arc_high = int((50+int(arc_lines/2))*n/100)
+
+            coord_list_low = np.concatenate([[i+j for j in range(s-1)] for i in range(0,arc_low,s)],axis=0)
+            coord_list_high = np.concatenate([[i+j for j in range(s-1)] for i in range(arc_high,n-(s-1),s)],axis=0)
+            coord_list = np.concatenate([coord_list_low,coord_list_high],axis=0)
+
+            corrupt_k = true_k.copy()
+            for k in range(len(coord_list)):
+                corrupt_k[0, coord_list[k], :, :] = 0
+                mask[0, coord_list[k], :, :] = 0
+            corrupt_img = utils.convert_to_image_domain(corrupt_k)
+
+            nf = np.max(corrupt_img)
+
+            if(input_domain == 'FREQ'):
+                inputs = np.append(inputs, corrupt_k / nf, axis=0)
+                masks = np.append(masks, mask, axis=0)
+            elif(input_domain == 'IMAGE'):
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
+            elif(input_domain == 'MAG'):
+                corrupt_img = np.expand_dims(np.abs(utils.join_reim(corrupt_img)),-1)
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
+            elif(input_domain == 'COMPLEX_K'):
+                corrupt_k = np.expand_dims(utils.join_reim(corrupt_k),-1)
+                inputs = np.append(inputs, corrupt_k / nf, axis=0)
+            elif(input_domain == 'COMPLEX_I'):
+                corrupt_img = np.expand_dims(utils.join_reim(corrupt_img),-1)
+                inputs = np.append(inputs, corrupt_img / nf, axis=0)
+
+            if(output_domain == 'FREQ'):
+                outputs = np.append(outputs, true_k / nf, axis=0)
+            elif(output_domain == 'IMAGE'):
+                outputs = np.append(outputs, true_img / nf, axis=0)
+            elif(output_domain == 'MAG'):
+                true_img = np.expand_dims(np.abs(utils.join_reim(true_img)),-1)
+                outputs = np.append(outputs, true_img / nf, axis=0)
+            elif(output_domain == 'COMPLEX_K'):
+                true_k = np.expand_dims(utils.join_reim(true_k),-1)
+                outputs = np.append(inputs, true_k / nf, axis=0)
+            elif(output_domain == 'COMPLEX_I'):
+                true_img = np.expand_dims(utils.join_reim(true_img),-1)
+                outputs = np.append(inputs, true_img / nf, axis=0)
+
+            if('COMPLEX' in input_domain):
+                mask = mask [:,:,:,0]
+                masks = np.append(masks, mask, axis=0)
+
+        if(enforce_dc):
+            yield((inputs, masks), outputs)
+        else:
+            yield(inputs, outputs)
+
+
 def generate_motion_data(
         images,
         input_domain,
@@ -495,6 +608,14 @@ def generate_data(
 
     if(task == 'undersample'):
         return generate_undersampled_data(
+            images,
+            input_domain,
+            output_domain,
+            exp_config.us_frac,
+            exp_config.enforce_dc,
+            batch_size)
+    elif(task == 'uniform_undersample'):
+        return generate_uniform_undersampled_data(
             images,
             input_domain,
             output_domain,
