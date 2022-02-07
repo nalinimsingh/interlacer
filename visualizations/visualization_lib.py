@@ -50,7 +50,7 @@ def load_model(config_path, da=False):
             (n, n, 2), exp_config.nonlinearity, exp_config.kernel_size, exp_config.num_features, exp_config.num_convs,exp_config.num_layers,exp_config.enforce_dc)
     elif(exp_config.architecture == 'ALTERNATING_RESIDUAL'):
         model = models.get_alternating_residual_model(
-            (n, n, 2), exp_config.nonlinearity, exp_config.kernel_size, exp_config.num_features, exp_config.num_layers,exp_config.enforce_dc)
+            (n, n, 2), exp_config.nonlinearity, exp_config.kernel_size, exp_config.num_features, exp_config.num_convs,exp_config.num_layers,exp_config.enforce_dc)
 
     return exp_config, model
 
