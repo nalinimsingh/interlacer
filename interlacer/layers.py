@@ -5,7 +5,7 @@ from tensorflow.keras.layers import *
 from tensorflow.keras.utils import get_custom_objects
 
 from interlacer import utils
-
+from neurite.tf import layers as nel
 
 def piecewise_relu(x):
     """Custom nonlinearity for freq-space convolutions."""
@@ -27,33 +27,53 @@ def get_nonlinear_layer(nonlinearity):
 class BatchNormConv(Layer):
     """Custom layer that combines BN and a convolution."""
 
-    def __init__(self, features, kernel_size, **kwargs):
+    def __init__(self, features, kernel_size, hyp_conv=False, **kwargs):
         self.features = features
         self.kernel_size = kernel_size
+        self.hyp_conv = hyp_conv
         super(BatchNormConv, self).__init__(**kwargs)
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'features': self.features,
+            'kernel_size': self.kernel_size,
+            'hyp_conv': self.hyp_conv})
 
     def build(self, input_shape):
         self.bn = BatchNormalization()
-        self.conv = Conv2D(
+        if(self.hyp_conv):
+            conv_layer = nel.HyperConv2DFromDense
+            kwargs = {}
+        else:
+            conv_layer = Conv2D
+            kwargs = {'kernel_initializer':'he_normal'}
+
+        self.conv = conv_layer(
             self.features,
             self.kernel_size,
             activation=None,
             padding='same',
-            kernel_initializer='he_normal')
+            **kwargs)
         super(BatchNormConv, self).build(input_shape)
 
     def call(self, x):
         """Core layer function to combine BN/convolution.
 
         Args:
-          x: Input tensor
+          x: Input tensor (or, if HyperConv, a tuple of input tensor and
+          hypernetwork output)
 
         Returns:
           conv(float): Output of BN (on axis 0) followed by convolution
 
         """
-        bn = self.bn(x)
-        conv = self.conv(bn)
+        if(self.hyp_conv):
+            bn = self.bn(x[0])
+            conv = self.conv((bn, x[1]))
+        else:
+            bn = self.bn(x)
+            conv = self.conv(bn)
 
         return conv
 
@@ -95,18 +115,22 @@ class Mix(Layer):
 class Interlacer(Layer):
     """Custom layer to learn features in both image and frequency space."""
 
-    def __init__(self, features, kernel_size, num_convs=1, shift=False, **kwargs):
+    def __init__(self, features, kernel_size, num_convs=1, shift=False,
+            hyp_conv=False, **kwargs):
         self.features = features
         self.kernel_size = kernel_size
         self.num_convs = num_convs
         self.shift = shift
+        self.hyp_conv = hyp_conv
         super(Interlacer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.img_mix = Mix()
         self.freq_mix = Mix()
-        self.img_bnconvs = [BatchNormConv(self.features, self.kernel_size) for i in range(self.num_convs)]
-        self.freq_bnconvs = [BatchNormConv(self.features, self.kernel_size) for i in range(self.num_convs)]
+        self.img_bnconvs = [BatchNormConv(self.features, self.kernel_size,
+            hyp_conv=self.hyp_conv) for i in range(self.num_convs)]
+        self.freq_bnconvs = [BatchNormConv(self.features, self.kernel_size,
+            hyp_conv=self.hyp_conv) for i in range(self.num_convs)]
         super(Interlacer, self).build(input_shape)
 
     def call(self, x):
@@ -120,7 +144,10 @@ class Interlacer(Layer):
           freq_conv(float): nonlinear(conv(BN(alpha*freq_in+FFT(img_in))))
 
         """
-        img_in, freq_in = x
+        if(self.hyp_conv):
+            img_in, freq_in, hyp_tensor = x
+        else:
+            img_in, freq_in = x
 
         img_in_as_freq = utils.convert_channels_to_frequency_domain(img_in)
         freq_in_as_img = utils.convert_channels_to_image_domain(freq_in)
@@ -131,12 +158,19 @@ class Interlacer(Layer):
         for i in range(self.num_convs):
             if(self.shift):
                 img_feat = tf.signal.ifftshift(img_feat, axes=(1,2))
-            img_conv = self.img_bnconvs[i](img_feat)
+            if(self.hyp_conv):
+                img_conv = self.img_bnconvs[i](img_feat, hyp_tensor)
+            else:
+                img_conv = self.img_bnconvs[i](img_feat)
             img_feat = get_nonlinear_layer('relu')(img_conv)
+
             if(self.shift):
                 img_feat = tf.signal.fftshift(img_feat, axes=(1,2))
 
-            k_conv = self.freq_bnconvs[i](k_feat)
+            if(self.hyp_conv):
+                k_conv = self.freq_bnconvs[i](k_feat, hyp_tensor)
+            else:
+                k_conv = self.freq_bnconvs[i](k_feat)
             k_feat = get_nonlinear_layer('3-piece')(k_conv)
 
         return (img_feat, k_feat)
