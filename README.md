@@ -25,14 +25,17 @@ We provide a helper script to generate config files for experiments comparing mu
 
 For SLURM users, running `python scripts/run_experiment.py ../configs/$experiment_name$` starts training (by running `train.py`) for each configuration file within the directory.
 
-## Paper 
-If you use the ideas or implementation in this repository, please cite our [paper](https://arxiv.org/abs/2007.01441):
+## Pretrained Models
+Pretrained models are available in the `pretrained models` directory. This directory also includes a jupyter notebook which shows how to load and run inference using the models.
 
-    @misc{singh2020joint,
-        title={Joint Frequency- and Image-Space Learning for Fourier Imaging},
-        author={Nalini M. Singh and Juan Eugenio Iglesias and Elfar Adalsteinsson and Adrian V. Dalca and Polina Golland},
-        year={2020},
-        eprint={2007.01441},
-        archivePrefix={arXiv},
-        primaryClass={cs.CV}
-    }       
+## Paper
+If you use the ideas or implementation in this repository, please cite our [paper](https://www.melba-journal.org/papers/2022:018.html):
+
+    @article{melba:2022:018:singh,
+        title = "Joint Frequency and Image Space Learning for MRI Reconstruction and Analysis",
+        authors = "Singh, Nalini M. and Iglesias, Juan Eugenio and Adalsteinsson, Elfar and Dalca, Adrian V. and Golland, Polina",
+        journal = "Machine Learning for Biomedical Imaging",
+        volume = "1",
+        issue = "June 2022 issue",
+        year = "2022"
+    }

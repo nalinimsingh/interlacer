@@ -65,18 +65,26 @@ data_generators = [data_generator.generate_undersampled_data(
             max_htrans,
             max_vtrans,
             max_rot,
+            batch_size),
+
+            data_generator.generate_uniform_undersampled_data(
+            images,
+            input_domain,
+            output_domain,
+            us_frac,
+            True,
             batch_size)]
 
-filenames = ['brain_undersample_test.h5','brain_motion_test.h5','brain_noise_test.h5','brain_undersample_motion_test.h5']
+filenames = ['brain_undersample_test.h5','brain_motion_test.h5','brain_noise_test.h5','brain_undersample_motion_test.h5','brain_uniform_undersample_8x_test.h5']
 
 if not(os.path.exists('testsets')):
     os.mkdir('testsets')
 
-for i in range(4):
+for i in [4]:#range(4):
     dg = data_generators[i]
     fn = os.path.join('testsets/',filenames[i])
 
-    if('undersample_test' in fn):
+    if('undersample_test' in fn or 'undersample_8x_test' in fn):
         (m_in, m_mask), m_out = next(dg)
     else:
         m_in, m_out = next(dg)
@@ -86,7 +94,7 @@ for i in range(4):
     dataset = file.create_dataset(
         "inputs", np.shape(m_in), data=m_in
     )
-    if('undersample_test' in fn):
+    if('undersample_test' in fn or 'undersample_8x_test' in fn):
         dataset = file.create_dataset(
             "masks", np.shape(m_mask), data=m_mask
         )

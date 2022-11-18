@@ -260,6 +260,7 @@ def get_alternating_residual_model(
         nonlinearity,
         kernel_size,
         num_features,
+        num_convs,
         num_layers,
         enforce_dc):
     """Alternating model with residual convolutions.
@@ -271,6 +272,7 @@ def get_alternating_residual_model(
       nonlinearity(str): 'relu' or '3-piece'
       kernel_size(int): Dimension of each convolutional filter
       num_features(int): Number of features in each intermediate network layer
+      num_convs(int): Number of convolutions per layer
       num_layers(int): Number of convolutional layers in model
 
     Returns:
@@ -300,17 +302,19 @@ def get_alternating_residual_model(
     prev_layer = inputs
 
     for i in range(num_layers):
-        k_conv = layers.BatchNormConv(
-            num_features, kernel_size)(prev_layer) + inp_copy
-        nonlinear = layers.get_nonlinear_layer('3-piece')(k_conv)
+        for j in range(num_convs):
+            k_conv = layers.BatchNormConv(
+                num_features, kernel_size)(prev_layer) + inp_copy
+            prev_layer = layers.get_nonlinear_layer(nonlinearity)(k_conv)
 
-        img = utils.convert_channels_to_image_domain(nonlinear)
+        prev_layer = utils.convert_channels_to_image_domain(prev_layer)
 
-        img_conv = layers.BatchNormConv(
-            num_features, kernel_size)(img) + inp_img_copy
-        nonlinear = layers.get_nonlinear_layer('relu')(img_conv)
+        for j in range(num_convs):
+            img_conv = layers.BatchNormConv(
+                num_features, kernel_size)(prev_layer) + inp_img_copy
+            prev_layer = layers.get_nonlinear_layer('relu')(img_conv)
 
-        prev_layer = utils.convert_channels_to_frequency_domain(nonlinear)
+        prev_layer = utils.convert_channels_to_frequency_domain(prev_layer)
 
     output = Conv2D(2, kernel_size, activation=None, padding='same',
                     kernel_initializer='he_normal')(prev_layer) + inputs

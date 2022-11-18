@@ -21,13 +21,13 @@ def plot_img(img,i,vmin=None,vmax=None, ax=None):
         plt.imshow(np.abs(utils.join_reim(img))[i,:,:],cmap='gray',vmin=vmin,vmax=vmax)
         plt.axis('off')
     
-def plot_img_diff(img1,img2,i, ax=None):
+def plot_img_diff(img1,img2,i, vmin=-1, vmax=1, ax=None):
     if(ax is not None):
-        ax.imshow((np.abs(utils.join_reim(img1))-np.abs(utils.join_reim(img2)))[i,:,:],cmap='seismic',vmin=-1,vmax=1)
+        ax.imshow((np.abs(utils.join_reim(img1))-np.abs(utils.join_reim(img2)))[i,:,:],cmap='seismic',vmin=vmin,vmax=vmax)
         ax.axis('off')
     else:
         plt.figure()
-        plt.imshow((np.abs(utils.join_reim(img1))-np.abs(utils.join_reim(img2)))[i,:,:],cmap='seismic',vmin=-1,vmax=1)
+        plt.imshow((np.abs(utils.join_reim(img1))-np.abs(utils.join_reim(img2)))[i,:,:],cmap='seismic',vmin=vmin,vmax=vmax)
         plt.xticks([])
         plt.yticks([])
         
@@ -51,5 +51,5 @@ def plot_img_from_k(k,i,vmin=None,vmax=None, ax=None, fftshift=False):
 def plot_k_from_img(img,i,vmin=None,vmax=None, ax=None):
     plot_k(utils.convert_to_frequency_domain(img),i,vmin=vmin,vmax=vmax, ax=ax)
     
-def plot_img_from_k_diff(k1,k2,i, ax=None):
-    plot_img_diff(utils.convert_to_image_domain(k1), utils.convert_to_image_domain(k2),i, ax=ax)
+def plot_img_from_k_diff(k1,k2,i, vmin=-1, vmax=1, ax=None):
+    plot_img_diff(utils.convert_to_image_domain(k1), utils.convert_to_image_domain(k2),i, vmin=vmin, vmax=vmax,ax=ax)
