@@ -39,6 +39,7 @@ class BatchNormConv(Layer):
             'features': self.features,
             'kernel_size': self.kernel_size,
             'hyp_conv': self.hyp_conv})
+        return config
 
     def build(self, input_shape):
         self.bn = BatchNormalization()
@@ -124,6 +125,16 @@ class Interlacer(Layer):
         self.hyp_conv = hyp_conv
         super(Interlacer, self).__init__(**kwargs)
 
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'features': self.features,
+            'kernel_size': self.kernel_size,
+            'num_convs': self.num_convs,
+            'shift': self.shift,
+            'hyp_conv': self.hyp_conv})
+        return config
+        
     def build(self, input_shape):
         self.img_mix = Mix()
         self.freq_mix = Mix()
