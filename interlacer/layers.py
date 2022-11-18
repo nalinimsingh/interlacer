@@ -170,7 +170,7 @@ class Interlacer(Layer):
             if(self.shift):
                 img_feat = tf.signal.ifftshift(img_feat, axes=(1,2))
             if(self.hyp_conv):
-                img_conv = self.img_bnconvs[i](img_feat, hyp_tensor)
+                img_conv = self.img_bnconvs[i]((img_feat, hyp_tensor))
             else:
                 img_conv = self.img_bnconvs[i](img_feat)
             img_feat = get_nonlinear_layer('relu')(img_conv)
@@ -179,7 +179,7 @@ class Interlacer(Layer):
                 img_feat = tf.signal.fftshift(img_feat, axes=(1,2))
 
             if(self.hyp_conv):
-                k_conv = self.freq_bnconvs[i](k_feat, hyp_tensor)
+                k_conv = self.freq_bnconvs[i]((k_feat, hyp_tensor))
             else:
                 k_conv = self.freq_bnconvs[i](k_feat)
             k_feat = get_nonlinear_layer('3-piece')(k_conv)
