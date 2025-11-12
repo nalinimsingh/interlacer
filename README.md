@@ -11,6 +11,8 @@ All dependencies required to run this code are specified in `environment.yml`. T
 ## Layer Implementation
 If you'd like to incorporate our joint learning strategy into your own networks, we provide a standalone Keras Layer in `interlacer/layers.py`. This layer currently supports only 2D inputs.
 
+**Update (2025):** A **PyTorch implementation** is now available, including layers, models, dataloaders, and a sample notebook: `torch_interlacer/`
+
 ## Training Code
 Unfortunately, we are unable to provide the images used for training, due to license restrictions. However, we provide code to train on alternative datasets. To specify your own dataset paths and paths for output of training results, fill in the appropriate fields in `scripts/filepaths.py`.
 

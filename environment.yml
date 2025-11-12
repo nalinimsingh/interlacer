@@ -214,4 +214,5 @@ dependencies:
     - werkzeug==1.0.1
     - wheel==0.36.2
     - wrapt==1.12.1
+    - torch==1.13.1
 prefix: /data/vision/polina/scratch/nmsingh/anaconda_3/envs/tf-gpu
